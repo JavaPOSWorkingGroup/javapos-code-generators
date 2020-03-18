@@ -1,0 +1,10 @@
+rootProject.name = 'javapos-code-generators'
+
+def boolean isRunningOnBuildServer = System.getenv('TRAVIS')
+def boolean isDevHost = !isRunningOnBuildServer && !hasProperty('disableIDEDependencySubstitution')
+
+if (startParameter.searchUpwards && isDevHost)
+{
+// comment this out if you want to use binary dependencies
+	if (file('../javapos-contracts').exists()) 		includeBuild '../javapos-contracts'
+}
