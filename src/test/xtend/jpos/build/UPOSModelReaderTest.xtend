@@ -5,6 +5,7 @@ import jpos.CashDrawerControl114
 import static org.hamcrest.Matchers.*
 import static org.hamcrest.MatcherAssert.assertThat
 import jpos.ScaleControl114
+import org.junit.Ignore
 
 class UPOSModelReaderTest {
 
@@ -66,6 +67,29 @@ class UPOSModelReaderTest {
 
 		assertThat(waitForDrawerCloseMethod.parameterTypes.isNullOrEmpty, is(false))
 		assertThat(waitForDrawerCloseMethod.parameterTypes, is(#[int,int,int,int] as Class<?>[]))
+	}
+
+	@Ignore("This runs well in Eclipse environments only, because needs some special compilation configuration")
+	@Test
+	def void testParameterNaming() {
+	    val modelReader = new UPOSModelReader => [
+	        configuration = new UPOSModelReaderConfiguration => [
+	            supportedCategories = #
+	            [
+	                CashDrawerControl114
+                ]
+			]
+		]
+		
+		val uposModel = modelReader.readUposModelFor('JavaPOSDeviceControls')
+	
+		assertThat(uposModel.categories.length, is(1))
+		val cashDrawerCategory = uposModel.categories.head
+
+		assertThat(cashDrawerCategory.methods.isNullOrEmpty, is(false))
+		assertThat(cashDrawerCategory.methods.filter[name == "waitForDrawerClose"].size, is(1))
+		
+		val waitForDrawerCloseMethod = cashDrawerCategory.methods.filter[name == "waitForDrawerClose"].head
 		
 		// here is an example how parameter names as in the source code may be applied to generated code
 		// this however requires the javapos-contracts project being configured correctly (apropos 
