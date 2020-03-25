@@ -128,19 +128,19 @@ class UPOSModelReader {
     }
     
     def static addUposMethod(List<UposMethod> uposMethods, Method method, UposCategory category) {
-        uposMethods.add(new UposMethod(method.name, method.versionFirstDefinedIn, category, method.parameterTypes, method))
+        uposMethods.add(new UposMethod(method.name, method.versionFirstDefinedIn, category, method, method.parameterTypes))
     }
     
     def static addUposReadWriteProperty(List<UposProperty> uposProperties, Method property, UposCategory category) {
-        uposProperties.add(UposProperty::ReadWrite(property.pureUposPropertyName, property.parameterTypes.get(0), category, property.versionFirstDefinedIn))   
+        uposProperties.add(UposProperty::ReadWrite(property.pureUposPropertyName, property.parameterTypes.get(0), category, property.versionFirstDefinedIn, property))   
     }
     
     def static addUposReadOnlyProperty(List<UposProperty> uposProperties, Method property, UposCategory category) {
-        uposProperties.add(UposProperty::ReadOnly(property.pureUposPropertyName, property.returnType, category, property.versionFirstDefinedIn))
+        uposProperties.add(UposProperty::ReadOnly(property.pureUposPropertyName, property.returnType, category, property.versionFirstDefinedIn, property))
     }
     
     def static addUposEvent(List<UposEvent> uposEvents, Method m, UposCategory category) {
-        uposEvents.add(new UposEvent(m.eventName, m.versionFirstDefinedIn, category))   
+        uposEvents.add(new UposEvent(m.eventName, m.versionFirstDefinedIn, category, m))   
     }
     
     def static eventName(Method method) {
@@ -193,6 +193,7 @@ class UPOSModelReader {
 
 @Data class UposFeature extends UposEntity {
     UposCategory categoryBelongingTo
+    Method javaMethod
 }
 
 @Data class UposCategory extends UposEntity {
@@ -204,15 +205,14 @@ class UPOSModelReader {
 
 @Data class UposMethod extends UposFeature {
     Class<?>[] parameterTypes
-    Method javaMethod
 }
 
 @Data class UposProperty extends UposFeature {
-    def static ReadOnly(String name, Class<?> returnType, UposCategory categoryBelongigTo, int unifiedPOSversionFirstIn) { 
-    	new UposProperty(name, unifiedPOSversionFirstIn, categoryBelongigTo, true, returnType)
+    def static ReadOnly(String name, Class<?> returnType, UposCategory categoryBelongigTo, int unifiedPOSversionFirstIn, Method method) { 
+    	new UposProperty(name, unifiedPOSversionFirstIn, categoryBelongigTo, method, true, returnType)
     }
-    def static ReadWrite(String name, Class<?> returnType, UposCategory categoryBelongigTo, int unifiedPOSversionFirstIn) { 
-    	new UposProperty(name, unifiedPOSversionFirstIn, categoryBelongigTo, false, returnType)
+    def static ReadWrite(String name, Class<?> returnType, UposCategory categoryBelongigTo, int unifiedPOSversionFirstIn, Method method) { 
+    	new UposProperty(name, unifiedPOSversionFirstIn, categoryBelongigTo, method, false, returnType)
     }
     boolean readonly
     Class<?> type
