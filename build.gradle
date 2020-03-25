@@ -53,7 +53,7 @@ dependencies {
 	compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.9.+'
 	compile 'org.javapos:javapos-contracts:1.14.3'
 
-    testCompile 'junit:junit:4.+'
+    compileOnly 'junit:junit:4.+'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
 }
 
