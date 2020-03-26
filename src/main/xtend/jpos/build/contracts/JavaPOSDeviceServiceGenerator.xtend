@@ -54,6 +54,11 @@ class JavaPOSDeviceServiceGenerator {
     
     // adapt this if a new UnifiedPOS minor version is going to be supported
     static val currentUnfiedPOSMinorVersion = 14
+    
+    // adapt this for controlling the version range of the to be generated service interface files 
+	static val supportedUnifiedPOSMinorVersionRange = (2..currentUnfiedPOSMinorVersion)
+	
+	// adapt this if your javapos-contracts project has another name
     static val generatedSourceDir = new File("../javapos-contracts/src/main/java/jpos/services")
     	
     
@@ -149,8 +154,6 @@ class JavaPOSDeviceServiceGenerator {
         model.categories?.forEach[synthesizeDeviceControlSourceFile(generatedSourceDir)]
     }
 
-	static val supportedUnifiedPOSMinorVersionRange = (2..currentUnfiedPOSMinorVersion) 
-	
     /**
      * Synthesizes a java source code file for the given category and writes it to the given directory.
      * @param category the UnifiedPOS category as returned by {@link UposModelreader} code has to be synthesized for
@@ -167,44 +170,58 @@ class JavaPOSDeviceServiceGenerator {
     	}
     }
     
-    def private static deviceServiceInterfaceFor(UposCategory category, int uposMinorVersion) '''
-		//////////////////////////////////////////////////////////////////////
-		//
-		// The JavaPOS library source code is now under the CPL license, which 
-		// is an OSS Apache-like license. The complete license is located at:
-		//    http://www.ibm.com/developerworks/library/os-cpl.html
-		//
-		//////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////
-		//
-		// This software is provided "AS IS".  The JavaPOS working group (including
-		// each of the Corporate members, contributors and individuals)  MAKES NO
-		// REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE,
-		// EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
-		// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-		// NON-INFRINGEMENT. The JavaPOS working group shall not be liable for
-		// any damages suffered as a result of using, modifying or distributing this
-		// software or its derivatives.Permission to use, copy, modify, and distribute
-		// the software and its documentation for any purpose is hereby granted.
-		//
-		// «category.name»Service1«uposMinorVersion»
-		//
-		//   Interface defining all new capabilities, properties and methods
-		//   that are specific to «category.humanReadableName» for release 1.«uposMinorVersion».
-		//
-		//   Automatically generated from «category.name»Control1«uposMinorVersion».
-		//
-		/////////////////////////////////////////////////////////////////////
-		
-		package jpos.services;
-		
-		import jpos.*;
-		
-		public interface «category.name»Service1«uposMinorVersion» extends «category.superInterfaceFor(uposMinorVersion)»
-		{
-		    «category.propertiesAndMethods(uposMinorVersion)»
-		}
-    '''
+    def private static deviceServiceInterfaceFor(UposCategory category, int uposMinorVersion) {
+    	val numberOfPropertiesAndMethods = 
+    		category.properties.filter[minorVersionAdded == uposMinorVersion].size 
+    		+ category.methods.filter[minorVersionAdded == uposMinorVersion].size
+    	
+	    '''
+			//////////////////////////////////////////////////////////////////////
+			//
+			// The JavaPOS library source code is now under the CPL license, which 
+			// is an OSS Apache-like license. The complete license is located at:
+			//    http://www.ibm.com/developerworks/library/os-cpl.html
+			//
+			//////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////
+			//
+			// This software is provided "AS IS".  The JavaPOS working group (including
+			// each of the Corporate members, contributors and individuals)  MAKES NO
+			// REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE,
+			// EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
+			// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+			// NON-INFRINGEMENT. The JavaPOS working group shall not be liable for
+			// any damages suffered as a result of using, modifying or distributing this
+			// software or its derivatives.Permission to use, copy, modify, and distribute
+			// the software and its documentation for any purpose is hereby granted.
+			//
+			// «category.name»Service1«uposMinorVersion»
+			//
+			//   Interface defining all new capabilities, properties and methods
+			//   that are specific to «category.humanReadableName» for release 1.«uposMinorVersion».
+			//
+			//   Automatically generated from «category.name»Control1«uposMinorVersion».
+			//
+			/////////////////////////////////////////////////////////////////////
+			
+			package jpos.services;
+
+			«IF numberOfPropertiesAndMethods > 0»			
+				import jpos.*;
+			«ENDIF»
+			
+			public interface «category.name»Service1«uposMinorVersion» extends «category.superInterfaceFor(uposMinorVersion)»
+			{
+				«IF numberOfPropertiesAndMethods > 0»
+					«category.capabilities(uposMinorVersion)»
+					«category.properties(uposMinorVersion)»
+					«category.methods(uposMinorVersion)»
+				«ELSE»
+					// Nothing new added for release 1.«uposMinorVersion»
+				«ENDIF»
+			}
+	    '''
+    }
     
     def private static superInterfaceFor(UposCategory category, int uposMinorVersion) {
     	if (uposMinorVersion == category.minorVersionAdded)
@@ -213,21 +230,6 @@ class JavaPOSDeviceServiceGenerator {
     		'''«category.name»Service1«uposMinorVersion-1»'''
     }
 	
-    def private static propertiesAndMethods(UposCategory category, int uposMinorVersion) {
-    	val numberOfPropertiesAndMethods = 
-    		category.properties.filter[minorVersionAdded == uposMinorVersion].size 
-    		+ category.methods.filter[minorVersionAdded == uposMinorVersion].size
-    		
-    	if (numberOfPropertiesAndMethods == 0)
-    		'''// Nothing new added for release 1.«uposMinorVersion»'''
-    	else
-    		'''
-    			«category.capabilities(uposMinorVersion)»
-    			«category.properties(uposMinorVersion)»
-    			«category.methods(uposMinorVersion)»
-    		'''
-    }
-    
     def private static capabilities(UposCategory category, int uposMinorVersion) {
     	val capabilitiesInThisVersion = category.properties.filter[minorVersionAdded==uposMinorVersion].filter[name.startsWith("Cap")]
     	
