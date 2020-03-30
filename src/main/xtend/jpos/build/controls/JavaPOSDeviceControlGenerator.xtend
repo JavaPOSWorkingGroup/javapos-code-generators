@@ -1,7 +1,6 @@
 package jpos.build.controls
 
 import java.io.File
-import java.lang.reflect.Parameter
 import jpos.BeltControl114
 import jpos.BillAcceptorControl114
 import jpos.BillDispenserControl114
@@ -49,8 +48,6 @@ import jpos.build.UposProperty
 import org.junit.Test
 
 import static extension jpos.build.SynthesizeHelper.argumentList
-import static extension jpos.build.SynthesizeHelper.hasArrayParameterTypes
-import static extension jpos.build.SynthesizeHelper.isUposArrayType
 import static extension jpos.build.SynthesizeHelper.javaPOSType
 import static extension jpos.build.SynthesizeHelper.parameterList
 import static extension jpos.build.SynthesizeHelper.restrictedMiniumMinorVersionNumber
@@ -61,9 +58,6 @@ class JavaPOSDeviceControlGenerator {
     // adapt this if a new UnifiedPOS minor version is going to be supported
     static val currentUnfiedPOSMinorVersion = 14
 
-    // adapt this for controlling the version range of the to be generated device controls
-    static val supportedUnifiedPOSMinorVersionRange = (2..currentUnfiedPOSMinorVersion) 
-    
     // adapt this if your javapos-controls project has another name
     static val generatedSourceDir = new File("../javapos-controls/src/main/java/jpos")
     
@@ -72,44 +66,43 @@ class JavaPOSDeviceControlGenerator {
         configuration = new UPOSModelReaderConfiguration => [
             supportedCategories = #
             [
-                CashDrawerControl114
-//                BumpBarControl114, 
-//                CashChangerControl114,
-//                CashDrawerControl114,
-//                CATControl114,
-//                CheckScannerControl114, 
-//                CoinDispenserControl114, 
-//                FiscalPrinterControl114, 
-//                HardTotalsControl114,
-//                KeylockControl114,
-//                LineDisplayControl114, 
-//                MICRControl114,
-//                MotionSensorControl114,
-//                MSRControl114,
-//                PINPadControl114, 
-//                PointCardRWControl114, 
-//                POSKeyboardControl114,
-//                POSPowerControl114,
-//                POSPrinterControl114, 
-//                RemoteOrderDisplayControl114, 
-//                ScaleControl114,
-//                ScannerControl114, 
-//                SignatureCaptureControl114, 
-//                ToneIndicatorControl114,
-//                BeltControl114,
-//                BillAcceptorControl114, 
-//                BillDispenserControl114, 
-//                CoinAcceptorControl114,
-//                CoinDispenserControl114,
-//                BiometricsControl114,
-//                ElectronicJournalControl114, 
-//                ElectronicValueRWControl114,
-//                GateControl114,
-//                ImageScannerControl114,  
-//                ItemDispenserControl114, 
-//                LightsControl114,
-//                RFIDScannerControl114, 
-//                SmartCardRWControl114
+                BumpBarControl114, 
+                CashChangerControl114,
+                CashDrawerControl114,
+                CATControl114,
+                CheckScannerControl114, 
+                CoinDispenserControl114, 
+                FiscalPrinterControl114, 
+                HardTotalsControl114,
+                KeylockControl114,
+                LineDisplayControl114, 
+                MICRControl114,
+                MotionSensorControl114,
+                MSRControl114,
+                PINPadControl114, 
+                PointCardRWControl114, 
+                POSKeyboardControl114,
+                POSPowerControl114,
+                POSPrinterControl114, 
+                RemoteOrderDisplayControl114, 
+                ScaleControl114,
+                ScannerControl114, 
+                SignatureCaptureControl114, 
+                ToneIndicatorControl114,
+                BeltControl114,
+                BillAcceptorControl114, 
+                BillDispenserControl114, 
+                CoinAcceptorControl114,
+                CoinDispenserControl114,
+                BiometricsControl114,
+                ElectronicJournalControl114, 
+                ElectronicValueRWControl114,
+                GateControl114,
+                ImageScannerControl114,  
+                ItemDispenserControl114, 
+                LightsControl114,
+                RFIDScannerControl114, 
+                SmartCardRWControl114
             ]
             omittedReadProperties = #
             { 
@@ -147,6 +140,7 @@ class JavaPOSDeviceControlGenerator {
     ]
 
     static val allEvents = #["Data", "DirectIO", "Error", "StatusUpdate", "OutputComplete", "Transition"]
+    static val supportedUnifiedPOSMinorVersionRange = (2..currentUnfiedPOSMinorVersion) 
     
     /**
      * Main class for code generation.<br>
@@ -222,9 +216,10 @@ class JavaPOSDeviceControlGenerator {
             // Variables
             //--------------------------------------------------------------------------
         
-            «supportedUnifiedPOSMinorVersionRange.map[minorVersion | 
-                '''protected «category.name»Service1«category.restrictedMiniumMinorVersionNumber(minorVersion)» service1«minorVersion»;'''
-            ].join('\n')»
+            «supportedUnifiedPOSMinorVersionRange
+                .filter[it >= category.minorVersionAdded]
+                .map[minorVersion |'''protected «category.name»Service1«minorVersion» service1«minorVersion»;''']
+                .join('\n')»
             «category.events?.map[deviceControlEventListenersDeclaration]?.join»
             
         
@@ -240,7 +235,10 @@ class JavaPOSDeviceControlGenerator {
                 
                 // Initialize instance data. Initializations are commented out for
                 // efficiency if the Java default is correct.
-                «supportedUnifiedPOSMinorVersionRange.map[minorVersion | '''//service1«minorVersion» = null;'''].join('\n')»
+                «supportedUnifiedPOSMinorVersionRange
+                    .filter[it >= category.minorVersionAdded]
+                    .map[minorVersion | '''//service1«minorVersion» = null;''']
+                    .join('\n')»
                 «category.events?.map[deviceControlEventListenersInitialization]?.join»
             }
             
@@ -279,13 +277,19 @@ class JavaPOSDeviceControlGenerator {
                 // Special case: service == null to free references
                 if(service == null)
                 {
-                    «supportedUnifiedPOSMinorVersionRange.map[minorVersion|'''service1«minorVersion» = null;'''].join('\n')»
+                    «supportedUnifiedPOSMinorVersionRange
+                        .filter[it >= category.minorVersionAdded]
+                        .map[minorVersion|'''service1«minorVersion» = null;''']
+                        .join('\n')»
                 }
                 else
                 {
                     // Make sure that the service actually conforms to the interfaces it
                     // claims to.
-                    «supportedUnifiedPOSMinorVersionRange.map[minorVersion|category.serviceAssignment(minorVersion)].join»
+                    «supportedUnifiedPOSMinorVersionRange
+                        .filter[it >= category.minorVersionAdded]
+                        .map[minorVersion|category.serviceAssignment(minorVersion)]
+                        .join»
                     
                 }
             }
@@ -346,41 +350,57 @@ class JavaPOSDeviceControlGenerator {
     /**
      * Synthesizes the code for a particular UnifedPOS method.
      */
-    def private static deviceControlMethod(UposMethod method) '''
-        public void «method.name»(«method.parameterList»)
-            throws JposException
-        {
-            // Make sure control is opened
-            if(!bOpen)
-            {
-                throw new JposException(JPOS_E_CLOSED, "Control not opened");
-            }
-            
-            «IF method.minorVersionAdded > 2»
-                // Make sure service supports at least version 1.«method.minorVersionAdded».0
-                if(serviceVersion < deviceVersion«method.versionWhenAddedToUPOS»)
-                {
-                    throw new JposException(JPOS_E_NOSERVICE,
-                                            "Device Service is not 1.«method.minorVersionAdded».0 compliant.");
-                }
-            «ENDIF»
-            
-            // Perform the operation
-            try
-            {
-                service«method.versionWhenAddedToUPOS».«method.name»(«method.argumentList»);«»
-            }
-            catch(JposException je)
-            {
-                throw je;
-            }
-            catch(Exception e)
-            {
-                throw new JposException(JPOS_E_FAILURE, 
-                                        "Unhandled exception from Device Service", e);
-            }
-        }    
-    '''
+    def private static deviceControlMethod(UposMethod method) {
+        switch (method.name) {
+            // special handling of Sale property which has a spelling error and is defined twice (wrongly spelled and right spelled) 
+            case 'setTarePriority': // && property.categoryBelongingTo.name.startsWith('Sale'): 
+                method.deviceControlSetPropertyMethodForWronglySpelledScaleTarePriority
+            case 'setTarePrioity': // && property.categoryBelongingTo.name.startsWith('Sale'): 
+                '''
+                    public void setTarePrioity(int priority)
+                            throws JposException
+                    {
+                        setTarePriority(priority);
+                    }
+                '''
+        	default: 
+                '''
+                    public void «method.name»(«method.parameterList»)
+                        throws JposException
+                    {
+                        // Make sure control is opened
+                        if(!bOpen)
+                        {
+                            throw new JposException(JPOS_E_CLOSED, "Control not opened");
+                        }
+                        
+                        «IF method.minorVersionAdded > method.categoryBelongingTo.minorVersionAdded»
+                            // Make sure service supports at least version 1.«method.minorVersionAdded».0
+                            if(serviceVersion < deviceVersion«method.versionWhenAddedToUPOS»)
+                            {
+                                throw new JposException(JPOS_E_NOSERVICE,
+                                                        "Device Service is not 1.«method.minorVersionAdded».0 compliant.");
+                            }
+                        «ENDIF»
+                        
+                        // Perform the operation
+                        try
+                        {
+                            service«method.versionWhenAddedToUPOS».«method.name»(«method.argumentList»);«»
+                        }
+                        catch(JposException je)
+                        {
+                            throw je;
+                        }
+                        catch(Exception e)
+                        {
+                            throw new JposException(JPOS_E_FAILURE, 
+                                                    "Unhandled exception from Device Service", e);
+                        }
+                    }    
+                '''
+        }
+    }
     
     def private static deviceControlEventListenersDeclaration(UposEvent event) '''
         protected Vector «event.name.toFirstLower»Listeners;
@@ -399,13 +419,11 @@ class JavaPOSDeviceControlGenerator {
             case 'StoreFiscalID': property.deviceControlSetPropertyMethod
 
             // special handling of ElectronicValueRW property which lacks of the "get" prefix in the Java method
-            case property.name == 'CapTrainingMode' && property.categoryBelongingTo.name.startsWith('ElectronicValueRW'): 
+            case property.javaMethod.name == 'CapTrainingMode' && property.categoryBelongingTo.name == 'ElectronicValueRW':
                 property.deviceControlGetPropertyMethodForWronglyNamedElectronicValueRWCapTrainingMode
+            case property.javaMethod.name == 'getCapTrainingMode' && property.categoryBelongingTo.name == 'ElectronicValueRW': 
+                '' // because property CapTrainingMode is contained twice in the read model of ElectronicValueRW
 
-            // special handling of Sale property which has a spelling error and is defined twice (wrongly spelled and right spelled) 
-            case property.name == 'TarePriority': // && property.categoryBelongingTo.name.startsWith('Sale'): 
-                property.deviceControlSetPropertyMethodForWronglySpelledScaleTarePriority
-            
             default: 
                 property.deviceControlPropertyMethodWithJposException        
         }
@@ -416,40 +434,42 @@ class JavaPOSDeviceControlGenerator {
         «property.deviceControlSetPropertyMethod»
     '''
     
-    def private static String deviceControlSetPropertyMethodForWronglySpelledScaleTarePriority(UposProperty property)
-    '''
-        public void set«property.name»(«property.javaPOSType» «property.name.toFirstLower»)
-            throws JposException
-        {
-            // Make sure control is opened
-            if(!bOpen)
+    def private static String deviceControlSetPropertyMethodForWronglySpelledScaleTarePriority(UposMethod method) {
+        val setterVariableName = method.javaMethod.parameters.head.name
+        '''
+            public void «method.name»(«method.javaMethod.parameters.head.type» «setterVariableName»)
+                throws JposException
             {
-                throw new JposException(JPOS_E_CLOSED, "Control not opened");
+                // Make sure control is opened
+                if(!bOpen)
+                {
+                    throw new JposException(JPOS_E_CLOSED, "Control not opened");
+                }
+                
+                // Make sure service supports at least version 1.«method.minorVersionAdded».0
+                if(serviceVersion < deviceVersion«method.versionWhenAddedToUPOS»)
+                {
+                    throw new JposException(JPOS_E_NOSERVICE,
+                                            "Device Service is not 1.«method.minorVersionAdded».0 compliant.");
+                }
+                
+                // Perform the operation
+                try
+                {
+                    service«method.versionWhenAddedToUPOS».setTarePrioity(«setterVariableName»);
+                }
+                catch(JposException je)
+                {
+                    throw je;
+                }
+                catch(Exception e)
+                {
+                    throw new JposException(JPOS_E_FAILURE, 
+                                            "Unhandled exception from Device Service", e);
+                }
             }
-            
-            // Make sure service supports at least version 1.«property.minorVersionAdded».0
-            if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
-            {
-                throw new JposException(JPOS_E_NOSERVICE,
-                                        "Device Service is not 1.«property.minorVersionAdded».0 compliant.");
-            }
-            
-            // Perform the operation
-            try
-            {
-                service«property.versionWhenAddedToUPOS».setTarePrioity(«property.name.toFirstLower»);
-            }
-            catch(JposException je)
-            {
-                throw je;
-            }
-            catch(Exception e)
-            {
-                throw new JposException(JPOS_E_FAILURE, 
-                                        "Unhandled exception from Device Service", e);
-            }
-        }
-    '''
+        '''
+    }
 
     
     def private static String deviceControlGetPropertyMethod(UposProperty property) '''
@@ -462,7 +482,7 @@ class JavaPOSDeviceControlGenerator {
                 throw new JposException(JPOS_E_CLOSED, "Control not opened");
             }
             
-            «IF property.minorVersionAdded > 2»
+            «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
                 // Make sure service supports at least version 1.«property.minorVersionAdded».0
                 if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
                 {
@@ -496,33 +516,7 @@ class JavaPOSDeviceControlGenerator {
         public «property.javaPOSType» «property.name»()
             throws JposException
         {
-            // Make sure control is opened
-            if(!bOpen)
-            {
-                throw new JposException(JPOS_E_CLOSED, "Control not opened");
-            }
-            
-            // Make sure service supports at least version 1.«property.minorVersionAdded».0
-            if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
-            {
-                throw new JposException(JPOS_E_NOSERVICE,
-                                        "Device Service is not 1.«property.minorVersionAdded».0 compliant.");
-            }
-            
-            // Perform the operation
-            try
-            {
-                return service«property.versionWhenAddedToUPOS».«property.name»();
-            }
-            catch(JposException je)
-            {
-                throw je;
-            }
-            catch(Exception e)
-            {
-                throw new JposException(JPOS_E_FAILURE,
-                                        "Unhandled exception from Device Service", e);
-            }
+        	return get«property.name»();
         }
 
         public «property.javaPOSType» get«property.name»()
@@ -560,9 +554,10 @@ class JavaPOSDeviceControlGenerator {
 
 
     def private static String deviceControlSetPropertyMethod(UposProperty property) {
-        if (!property.readonly)
+        if (!property.readonly) {
+        	val setterVariableName = property.javaMethod.parameters.head.name
             '''
-                public void set«property.name»(«property.javaPOSType» «property.name.toFirstLower»)
+                public void set«property.name»(«property.javaPOSType» «setterVariableName»)
                     throws JposException
                 {
                     // Make sure control is opened
@@ -571,17 +566,20 @@ class JavaPOSDeviceControlGenerator {
                         throw new JposException(JPOS_E_CLOSED, "Control not opened");
                     }
                     
-                    // Make sure service supports at least version 1.«property.minorVersionAdded».0
-                    if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
-                    {
-                        throw new JposException(JPOS_E_NOSERVICE,
-                                                "Device Service is not 1.«property.minorVersionAdded».0 compliant.");
-                    }
+                    
+                    «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
+                        // Make sure service supports at least version 1.«property.minorVersionAdded».0
+                        if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
+                        {
+                            throw new JposException(JPOS_E_NOSERVICE,
+                                                    "Device Service is not 1.«property.minorVersionAdded».0 compliant.");
+                        }
+                    «ENDIF»
                     
                     // Perform the operation
                     try
                     {
-                        service«property.versionWhenAddedToUPOS».set«property.name»(«property.name.toFirstLower»);
+                        service«property.versionWhenAddedToUPOS».set«property.name»(«setterVariableName»);
                     }
                     catch(JposException je)
                     {
@@ -594,6 +592,7 @@ class JavaPOSDeviceControlGenerator {
                     }
                 }
             '''
+        }
         else 
             ''
         
