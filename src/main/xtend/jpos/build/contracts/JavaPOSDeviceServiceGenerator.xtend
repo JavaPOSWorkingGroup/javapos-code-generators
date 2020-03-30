@@ -301,19 +301,16 @@ class JavaPOSDeviceServiceGenerator {
 			'''
 	}
 	
-	def private static setPropertyMethod(UposProperty property) {
-		if (property.name == 'TarePriority' && property.categoryBelongingTo.name == 'Scale')
-			// this property was initially misspelled and was latter added correctly only to the control interface, not the service interface
-			// and therefore is not generated for here 
-			''
-		else		
-			'''
-					public void    set«property.name»(«property.javaPOSType» «property.javaMethod.parameters.get(0).name») throws JposException;
-			'''
-	}
+	def private static setPropertyMethod(UposProperty property) '''
+        public void    set«property.name»(«property.javaPOSType» «property.javaMethod.parameters.get(0).name») throws JposException;
+    '''
 	
 	def private static synthesizeMethodFor(UposMethod method, int uposVersion) {
-		if (method.minorVersionAdded == uposVersion)
+        if (method.name == 'setTarePriority' && method.categoryBelongingTo.name == 'Scale')
+            // this property was initially misspelled and was latter added correctly only to the control interface, not the service interface
+            // and therefore is not generated for here 
+            ''
+        else if (method.minorVersionAdded == uposVersion)
 			'''
 			    public void    «method.name»(«method.parameterList») throws JposException;
 			'''

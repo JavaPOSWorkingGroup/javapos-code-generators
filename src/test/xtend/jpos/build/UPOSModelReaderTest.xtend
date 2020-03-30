@@ -6,6 +6,8 @@ import static org.hamcrest.Matchers.*
 import static org.hamcrest.MatcherAssert.assertThat
 import jpos.ScaleControl114
 import org.junit.Ignore
+import jpos.FiscalPrinterControl114
+import jpos.ElectronicValueRWControl114
 
 class UPOSModelReaderTest {
 
@@ -152,4 +154,75 @@ class UPOSModelReaderTest {
 		assertThat(zeroValidProperty.readonly, is(false)) // it has a setter
 	}
 	
+	@Test
+	def void testSpecialFiscalMethodsWithSetPrefix() {
+        val modelReader = new UPOSModelReader => [
+            configuration = new UPOSModelReaderConfiguration => [
+                supportedCategories = #
+                [
+                    FiscalPrinterControl114
+                ]
+            ]
+        ]
+        
+        val uposModel = modelReader.readUposModelFor('JavaPOSDeviceControls')
+    
+        assertThat(uposModel.categories.length, is(1))
+        val fiscalPrinterCategory = uposModel.categories.head
+
+        assertThat(fiscalPrinterCategory.properties.contains('StoreFiscalID'), is(false))
+        assertThat(fiscalPrinterCategory.properties.contains('Date'), is(false))
+        assertThat(fiscalPrinterCategory.properties.contains('Currency'), is(false))
+        
+        assertThat(fiscalPrinterCategory.methods.filter[name == 'setStoreFiscalID'].size, is(1))
+        assertThat(fiscalPrinterCategory.methods.filter[name == 'setDate'].size, is(1))
+        assertThat(fiscalPrinterCategory.methods.filter[name == 'setCurrency'].size, is(1))
+	}
+	
+	@Test
+    def void testSpecialScaleMethodsWithSetPrefix() {
+        val modelReader = new UPOSModelReader => [
+            configuration = new UPOSModelReaderConfiguration => [
+                supportedCategories = #
+                [
+                    ScaleControl114
+                ]
+            ]
+        ]
+        
+        val uposModel = modelReader.readUposModelFor('JavaPOSDeviceControls')
+    
+        assertThat(uposModel.categories.length, is(1))
+        val scaleCategory = uposModel.categories.head
+        
+        assertThat(scaleCategory.properties.contains('PriceCalculationMode'), is(false))
+        assertThat(scaleCategory.properties.contains('TarePrioity'), is(false))
+        assertThat(scaleCategory.properties.contains('TarePriority'), is(false))
+        
+        assertThat(scaleCategory.methods.filter[name == 'setPriceCalculationMode'].size, is(1))
+        assertThat(scaleCategory.methods.filter[name == 'setTarePrioity'].size, is(1))
+        assertThat(scaleCategory.methods.filter[name == 'setTarePriority'].size, is(1))
+    }
+	
+    @Test
+    def void testWronglyNamedPropertyWithoutGetPrefix() {
+        val modelReader = new UPOSModelReader => [
+            configuration = new UPOSModelReaderConfiguration => [
+                supportedCategories = #
+                [
+                    ElectronicValueRWControl114
+                ]
+            ]
+        ]
+        
+        val uposModel = modelReader.readUposModelFor('JavaPOSDeviceControls')
+    
+        assertThat(uposModel.categories.length, is(1))
+        val electronicRWCategory = uposModel.categories.head
+        
+        assertThat(electronicRWCategory.properties.contains('CapTrainingMode'), is(false))
+
+        assertThat(electronicRWCategory.methods.filter[name == 'CapTrainingMode'].size, is(0))
+    }
+    
 }

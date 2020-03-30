@@ -32,7 +32,7 @@ class UPOSModelReader {
 
     def static isScaleSetMethod(Method method) { // added in UnifiedPOS 1.14
         method.declaringClass.simpleName.contains('Scale') 
-        && (method.name == 'setPriceCalculationMode' || method.name == 'setTarePrioity') 
+        && (method.name == 'setPriceCalculationMode' || method.name == 'setTarePrioity' || method.name == 'setTarePriority')
     }
     
     def static isWronglyNamedGetProperty(Method method) { // added in UnifiedPOS 1.14
