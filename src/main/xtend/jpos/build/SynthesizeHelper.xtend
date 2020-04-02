@@ -62,6 +62,13 @@ class SynthesizeHelper {
     }
     
     /**
+     * @return returns the given minor version preceded with zero if it on digit otherwise unchanged.
+     */
+    def static zeroPreceded(int minorVersion) {
+        String.format("%02d", minorVersion)
+    }
+    
+    /**
      * @return the Java type name representation for the given UPOS property which may be used in generated code as Java type definition
      */
 	def static javaPOSType(UposProperty property) {
