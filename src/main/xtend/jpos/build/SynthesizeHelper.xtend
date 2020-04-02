@@ -96,13 +96,33 @@ class SynthesizeHelper {
     def static isUposArrayType(Class<?> type) {
         switch (type) {
             case typeof(String[]):  return true  
+            case typeof(boolean[]): return true
             case typeof(byte[]):    return true
             case typeof(int[]):     return true
             case typeof(long[]):    return true
             case typeof(byte[][]):  return true
+            case typeof(int[][]):  return true
             case typeof(Object[]):  return true
         }
         return false
+    }
+    
+    /**
+     * @return an Java identifier compliant name for the given type, intended to be used as part of a method name. 
+     */
+    def static javaPOSTypeAsIdentifierPart(Class<?> type) {
+        switch (type) {
+            case typeof(String[]):  return 'StringArray'  
+            case typeof(boolean[]): return 'BooleanArray'
+            case typeof(byte[]):    return 'ByteArray'
+            case typeof(int[]):     return 'IntArray'
+            case typeof(long[]):    return 'LongArray'
+            case typeof(Object[]):  return 'ObjectArray'
+            case typeof(byte[][]):  return 'ByteArrayArray'
+            case typeof(int[][]):     return 'IntArrayArray'
+            default:
+                return type.simpleName
+        }
     }
 
     /**
@@ -164,5 +184,23 @@ class SynthesizeHelper {
     	}
     }
 
-	
+	def static CPL_LICENSE_HEADER() '''
+       ////////////////////////////////////////////////////////////////////////////////
+       //
+       // The JavaPOS library source code is under the CPL license, which 
+       // is an OSS Apache-like license. The complete license is located at:
+       //    http://www.ibm.com/developerworks/library/os-cpl.html
+       //
+       //------------------------------------------------------------------------------
+       // This software is provided "AS IS".  The JavaPOS working group (including
+       // each of the Corporate members, contributors and individuals)  MAKES NO
+       // REPRESENTATIONS OR WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE,
+       // EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
+       // WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+       // NON-INFRINGEMENT. The JavaPOS working group shall not be liable for
+       // any damages suffered as a result of using, modifying or distributing this
+       // software or its derivatives.Permission to use, copy, modify, and distribute
+       // the software and its documentation for any purpose is hereby granted.
+       ////////////////////////////////////////////////////////////////////////////////
+	'''
 }
