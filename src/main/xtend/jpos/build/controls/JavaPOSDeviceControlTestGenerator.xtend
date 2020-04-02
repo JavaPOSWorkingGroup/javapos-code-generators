@@ -49,7 +49,9 @@ import org.junit.Test
 
 import static extension jpos.build.SynthesizeHelper.javaPOSType
 import static extension jpos.build.SynthesizeHelper.javaPOSTypeAsIdentifierPart
+import static extension jpos.build.SynthesizeHelper.parameterList
 import static jpos.build.SynthesizeHelper.CPL_LICENSE_HEADER
+import static extension jpos.build.SynthesizeHelper.zeroPreceded
 
 class JavaPOSDeviceControlTestGenerator {
     
@@ -105,7 +107,8 @@ class JavaPOSDeviceControlTestGenerator {
             omittedReadProperties = #{
                 'getState',
                 'getDeviceControlDescription',
-                'getDeviceControlVersion'
+                'getDeviceControlVersion',
+                'getDeviceServiceVersion'
             }
             omittedMethods = #{
                 'open'
@@ -113,8 +116,6 @@ class JavaPOSDeviceControlTestGenerator {
         ]
     ]
 
-    static val supportedUnifiedPOSMinorVersionRange = (2..currentUnfiedPOSMinorVersion) 
-    
     /**
      * Main class for code generation.<br>
      * Currently realized as Unit test for getting a fast and convenient interactive 
@@ -132,6 +133,7 @@ class JavaPOSDeviceControlTestGenerator {
     def private static synthesize(UposModel model) {
        generatedSourceDir.mkdirs() 
         model.categories?.forEach[synthesizeDeviceControlSourceFile]
+        model.categories?.forEach[synthesizeTestDeviceServiceFiles]
     }
     
     
@@ -233,20 +235,37 @@ class JavaPOSDeviceControlTestGenerator {
                 assertThat(callbacks, is(notNullValue()));
             }
             
-            «category.properties.map[testFailsWithClosedExceptionBeforeOpen].join»
-            «category.methods.map[testFailsWithClosedExceptionBeforeOpen].join»
+            «category.properties.map[testFailsWithClosedExceptionBeforeOpen].join('\n')»
             
-            «category.properties.map[testFailsWithFailureExceptionOnNPE].join»
-            «category.methods.map[testFailsWithFailureExceptionOnNPE].join»
+            «category.methods.map[testFailsWithClosedExceptionBeforeOpen].join('\n')»
             
-            «category.properties.map[testFailsOnServiceVersionBeforeAdded].join»
+            «category.properties.map[testFailsWithFailureExceptionOnNPE].join('\n')»
+            
+            «category.methods.map[testFailsWithFailureExceptionOnNPE].join('\n')»
+            
+            «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion |
+                '''
+                    @Test
+                    public final void testGetDeviceVersion1«minorVersion»() {
+                        try {
+                            this.control.open(OPENNAME_SERVICE_1«minorVersion»);
+                            assertThat(this.control.getDeviceServiceVersion(), is(1_0«minorVersion.zeroPreceded»_000));
+                        }
+                        catch (JposException e) {
+                            fail("«category.name».getDeviceServiceVersion() failed with " + e.getMessage());
+                        }
+                    }
+                '''
+            ].join('\n')»
+            
+            «category.properties.map[testFailsOnServiceVersionBeforeAdded].join('\n')»
         }
     '''
     
     def private static testFailsOnServiceVersionBeforeAdded(UposProperty property) '''
         «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
             @Test
-            public void test«property.getMethodName»FailsOnServiceVersionBeforeAdded() {
+            public void test«property.getMethodName.toFirstUpper»FailsOnServiceVersionBeforeAdded() {
                 try {
                     this.control.open(OPENNAME_SERVICE_1«property.minorVersionAdded-1»);
                     this.control.«property.getMethodName»();
@@ -261,7 +280,7 @@ class JavaPOSDeviceControlTestGenerator {
         «ENDIF»
         
         @Test
-        public void test«property.getMethodName»CalledOnServiceVersionWhenAdded() throws Exception {
+        public void test«property.getMethodName.toFirstUpper»CalledOnServiceVersionWhenAdded() throws Exception {
             try {
                 this.control.open(OPENNAME_SERVICE_1«property.minorVersionAdded»);
                 this.control.«property.getMethodName»();
@@ -276,26 +295,26 @@ class JavaPOSDeviceControlTestGenerator {
             .map[ minorVersion |
                 '''
                     @Test
-                    public void testGet«property.name»CalledOnServiceVersion1«minorVersion»() {
+                    public void test«property.getMethodName.toFirstUpper»CalledOnServiceVersion1«minorVersion»() {
                         try {
                             this.control.open(OPENNAME_SERVICE_1«minorVersion»);
-                            this.control.get«property.name»();
+                            this.control.«property.getMethodName»();
                         }
                         catch (JposException e) {
                             fail(e.getMessage());
                         }
                     }
                 '''
-            ].join
+            ].join('\n')
         }»
         
         «IF !property.readonly»
             «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
                 @Test
-                public void testSet«property.name»FailsOnServiceVersionBeforeAdded() {
+                public void test«property.setMethodName.toFirstUpper»FailsOnServiceVersionBeforeAdded() {
                     try {
                         this.control.open(OPENNAME_SERVICE_1«property.minorVersionAdded-1»);
-                        this.control.set«property.name»(«property.type.defaultArgument»);
+                        this.control.«property.setMethodName»(«property.type.defaultArgument»);
                         fail("NOSERVICE JposException expected but not thrown");
                     }
                     catch (JposException e) {
@@ -306,33 +325,35 @@ class JavaPOSDeviceControlTestGenerator {
                 
             «ENDIF»
             @Test
-            public void testSet«property.name»CalledOnServiceVersionWhenAdded() throws Exception {
+            public void test«property.setMethodName.toFirstUpper»CalledOnServiceVersionWhenAdded() throws Exception {
                 try {
                     this.control.open(OPENNAME_SERVICE_1«property.minorVersionAdded»);
-                    this.control.set«property.name»(«property.type.defaultArgument»);
+                    this.control.«property.setMethodName»(«property.type.defaultArgument»);
                 }
                 catch (JposException e) {
                     fail(e.getMessage());
                 }
             }
             
-            «if (property.minorVersionAdded < currentUnfiedPOSMinorVersion) {
-                (property.minorVersionAddedButNotZero+1..currentUnfiedPOSMinorVersion)
+            «IF property.minorVersionAdded < currentUnfiedPOSMinorVersion»
+            
+            «(property.minorVersionAddedButNotZero+1..currentUnfiedPOSMinorVersion)
                 .map[ minorVersion |
                     '''
                         @Test
-                        public void testSet«property.name»CalledOnServiceVersion1«minorVersion»() {
+                        public void test«property.setMethodName.toFirstUpper»CalledOnServiceVersion1«minorVersion»() {
                             try {
                                 this.control.open(OPENNAME_SERVICE_1«minorVersion»);
-                                this.control.set«property.name»(«property.type.defaultArgument»);
+                                this.control.«property.setMethodName»(«property.type.defaultArgument»);
                             }
                             catch (JposException e) {
                                 fail(e.getMessage());
                             }
                         }
                     '''
-                ].join
-            }»
+                ].join('\n')
+            »
+            «ENDIF»
         «ENDIF»
     '''
     
@@ -362,11 +383,13 @@ class JavaPOSDeviceControlTestGenerator {
                 fail("FAILURE JposException expected but not thrown");
             }
             catch (JposException e) {
-                assertThat("FAILURE JposException expected but a different was thrown: " + e.getErrorCode(), e.getErrorCode(), is(JposConst.JPOS_E_FAILURE));
+                assertThat("FAILURE JposException expected but a different was thrown: " + e.getErrorCode(),
+                        e.getErrorCode(), is(JposConst.JPOS_E_FAILURE));
                 assertThat(e.getOrigException(), is(instanceOf(NullPointerException.class)));
             }
         }
         «IF !property.readonly»
+            
             @Test
             public final void test«property.setMethodName.toFirstUpper»FailsWithFailureExceptionOnNPE() {
                 try {
@@ -375,7 +398,8 @@ class JavaPOSDeviceControlTestGenerator {
                     fail("FAILURE JposException expected but not thrown");
                 }
                 catch (JposException e) {
-                    assertThat("FAILURE JposException expected but a different was thrown: " + e.getErrorCode(), e.getErrorCode(), is(JposConst.JPOS_E_FAILURE));
+                    assertThat("FAILURE JposException expected but a different was thrown: " + e.getErrorCode(),
+                            e.getErrorCode(), is(JposConst.JPOS_E_FAILURE));
                     assertThat(e.getOrigException(), is(instanceOf(NullPointerException.class)));
                 }
             }
@@ -417,8 +441,9 @@ class JavaPOSDeviceControlTestGenerator {
             }
         }
         «IF !property.readonly»
+            
             @Test
-            public final void test«property.setMethodName»FailsWithClosedExceptionBeforeOpen() {
+            public final void test«property.setMethodName.toFirstUpper»FailsWithClosedExceptionBeforeOpen() {
                 try {
                     this.control.«property.setMethodName»(«property.type.defaultArgument»);
                     fail("CLOSED JposException expected but not thrown");
@@ -458,19 +483,147 @@ class JavaPOSDeviceControlTestGenerator {
         	case Object: return 'new Object()'
         	
             case typeof(boolean[]): return 'new boolean[0]'
-        	case typeof(byte[]): return 'new byte[0]'
+        	case typeof(byte[]):    return 'new byte[0]'
             case typeof(String[]):  return 'new String[0]'  
             case typeof(int[]):     return 'new int[0]'
             case typeof(long[]):    return 'new long[0]'
             case typeof(Object[]):  return 'new Object[0]'
 
             case typeof(byte[][]):  return 'new byte[0][0]'
-            case typeof(int[][]):     return 'new int[0][0]'
+            case typeof(int[][]):   return 'new int[0][0]'
             
+            case typeof(java.awt.Point[]): return 'new java.awt.Point[0]'
+             
         	default: '''[unknown type "«type.javaPOSType»"]'''
         }
     }
     
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    // Synthesizing code for test Device Services
+    
+    /**
+     * Synthesizes a java source code file for the given category and writes it to the given directory.
+     * @param category the UnifiedPOS category as returned by {@link UposModelreader} code has to be synthesized for
+     * @param outputDir the directory the java file has to be written to 
+     */
+    def private static synthesizeTestDeviceServiceFiles(UposCategory category) {
+        val testServiceAlwaysThrowingNPEClassName = '''«category.name»TestServiceAlwaysThrowingNPE'''
+        SynthesizeHelper.generateFile(
+            new File('''«generatedSourceDir»/services''', '''«testServiceAlwaysThrowingNPEClassName».java'''), 
+            category.deviceTestServiceClass(testServiceAlwaysThrowingNPEClassName, currentUnfiedPOSMinorVersion, 
+                ['''throw new NullPointerException();'''],
+                ['''throw new NullPointerException();'''],
+                ['''throw new NullPointerException();''']
+            )
+        )
+
+        (category.minorVersionAdded..currentUnfiedPOSMinorVersion)
+        .forEach[ minorVersion |
+            val testServiceClassName = '''«category.name»TestService1«minorVersion»'''
+            SynthesizeHelper.generateFile(
+                new File('''«generatedSourceDir»/services''', '''«testServiceClassName».java'''), 
+                category.deviceTestServiceClass(testServiceClassName, minorVersion, 
+                    [getterBodyCode],
+                    [''],
+                    ['']
+                )
+            )
+        ]
+    }
+    
+    def private static getterBodyCode(UposProperty property) '''return «property.type.defaultArgument»;'''      
+    
+    def private static deviceTestServiceClass(UposCategory category, String testServiceClassName, int minorVersion,
+        (UposProperty) => CharSequence getterBodySynthesizer, 
+        (UposProperty) => CharSequence setterBodySynthesizer, 
+        (UposMethod) => CharSequence methodBodySynthesizer
+    ) '''
+        package jpos.services;
+        
+        import jpos.JposConst;
+        import jpos.JposException;
+        import jpos.loader.JposServiceInstance;
+        import jpos.services.EventCallbacks;
+        
+        /**
+         * JavaPOS Device Service class, intended to be used for testing purposes in «category.name»Test.
+         *
+         */
+        public final class «testServiceClassName» implements jpos.services.«category.name»Service1«minorVersion», JposServiceInstance {
+            
+            @Override
+            public int getDeviceServiceVersion() throws JposException {
+                return 1_0«minorVersion.zeroPreceded»_000;
+            }
+            
+            @Override
+            public int getState() throws JposException {
+                return JposConst.JPOS_S_CLOSED;
+            }
+        
+            @Override
+            public void open(String logicalName, EventCallbacks cb) throws JposException {
+                // intentionally left empty
+            }
+        
+            @Override
+            public void deleteInstance() throws JposException {
+                // intentionally left empty
+            }
+        
+            
+            «category.properties?.filter[isAServiceProperty]
+            .filter[minorVersionAdded <= minorVersion]
+            .map[testServiceMethod(getterBodySynthesizer, setterBodySynthesizer)].join('\n')»
+            
+            «category.methods?.filter[isAServiceMethod]
+            .filter[minorVersionAdded <= minorVersion]
+            .map[testServiceMethod(methodBodySynthesizer)].join('\n')»
+        }
+    '''
+    
+    def static isAServiceProperty(UposProperty property) {
+        if (property.name == 'DeviceServiceVersion')
+            // skip this as it is implemented specifically
+            return false 
+        else if (property.categoryBelongingTo.name == 'ElectronicValueRW' && property.javaMethod.name == 'getCapTrainingMode')
+            false
+        else
+            true
+    }
+    
+    def static isAServiceMethod(UposMethod method) {
+        if (method.categoryBelongingTo.name == 'Scale' && method.name == 'setTarePriority')
+            false
+        else
+            true
+    }
+    
+    def private static testServiceMethod(UposProperty property, 
+        (UposProperty) => CharSequence getterBodySynthesizer,
+        (UposProperty) => CharSequence setterBodySynthesizer
+    ) 
+    '''
+        @Override
+        public «property.javaPOSType» «property.getMethodName»() throws JposException {
+            «getterBodySynthesizer.apply(property)»
+        }
+        «IF !property.readonly»
+            
+            @Override
+            public void «property.setMethodName»(«property.javaPOSType» «property.javaMethod.parameters.head.name») throws JposException {
+                «setterBodySynthesizer.apply(property)»
+            }
+        «ENDIF»
+    '''
+    
+    def private static testServiceMethod(UposMethod method, (UposMethod) => CharSequence methodCodeSynthesizer) '''
+        @Override
+        public void «method.name»(«method.parameterList») throws JposException 
+        {
+            «methodCodeSynthesizer.apply(method)»
+        }
+    '''
 }
 
 
