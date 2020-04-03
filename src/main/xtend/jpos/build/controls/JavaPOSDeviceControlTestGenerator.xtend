@@ -448,7 +448,10 @@ class JavaPOSDeviceControlTestGenerator {
                     this.control.remove«event.name»Listener(listener);
                 }
             }
-            catch (JposException | InterruptedException e) {
+            catch (JposException e) {
+                fail(e.getMessage());
+            }
+            catch (InterruptedException e) {
                 fail(e.getMessage());
             }
         }
