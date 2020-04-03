@@ -424,7 +424,7 @@ class JavaPOSDeviceControlTestGenerator {
             final int numberOfListeners = 5;
             final int waitingTimeInMs = 100;
             final CountDownLatch remainingEventsToReceive= new CountDownLatch(numberOfListeners);
-            List<«event.name»Listener> listeners = new ArrayList<>();
+            List<«event.name»Listener> listeners = new ArrayList<«event.name»Listener>();
             
             try {
                 this.control.open(OPENNAME_SERVICE_1«currentUnfiedPOSMinorVersion»);
