@@ -155,6 +155,7 @@ class JavaPOSDeviceControlTestGenerator {
     def private static testServiceRethrowingJposExceptionClassName(UposCategory category) '''«category.name»TestServiceRethrowingJposException'''
     def private static testServiceClassName(UposCategory category, int minorVersion) '''«category.name»TestService1«minorVersion»'''
     static val propertyNameReturningVersionTooLarge = 'returnVersionTooLarge'
+    static val propertyNameThrowingNPEOnGetDSVersion = 'throwingNPEOnGetDSVersion'
     
     /**
      * Synthesizes the code for a particular UnifedPOS method or property passed.
@@ -200,8 +201,11 @@ class JavaPOSDeviceControlTestGenerator {
                 '''private static final String SERVICE_1«minorVersion» = "«category.testServiceClassName(minorVersion)»";'''
             ].join('\n')»
             
+            private static final String OPENNAME_WITH_NOT_EXISTING_SERVICECLASS = "OpenNameWithNotExistingServiceClass";
             private static final String OPENNAME_ALL_METHODS_THROWING_NPE = SERVICE_ALL_METHODS_THROWING_NPE;
             private static final String OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION = SERVICE_ALL_METHODS_RETHROWING_JPOSEXCEPTION;
+            private static final String OPENNAME_THROWING_NPE_ON_GETDSVERSION = "CashDrawerTestServiceThrowingNPEOnGetDSVersion";
+            
             private static final String OPENNAME_SERVICE_10 = SERVICE_1«category.minorVersionAdded»;
             «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion |
                 '''private static final String OPENNAME_SERVICE_1«minorVersion» = SERVICE_1«minorVersion»;'''
@@ -218,8 +222,10 @@ class JavaPOSDeviceControlTestGenerator {
             public static void setUpBeforeClass() throws Exception {
                 JposEntryRegistry registry = JposServiceLoader.getManager().getEntryRegistry();
                 
+                registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_WITH_NOT_EXISTING_SERVICECLASS, "1.«currentUnfiedPOSMinorVersion»", "NotExistingServiceClass"));
                 registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_THROWING_NPE, "1.«currentUnfiedPOSMinorVersion»", SERVICE_ALL_METHODS_THROWING_NPE));
                 registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION, "1.«currentUnfiedPOSMinorVersion»", SERVICE_ALL_METHODS_RETHROWING_JPOSEXCEPTION));
+                registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_THROWING_NPE_ON_GETDSVERSION, "1.1«currentUnfiedPOSMinorVersion»", SERVICE_1«currentUnfiedPOSMinorVersion», new SimpleEntry.Prop("throwingNPEOnGetDSVersion", "")));
                 
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion | 
                     '''registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_SERVICE_1«minorVersion», "1.«minorVersion»", SERVICE_1«minorVersion»));'''
@@ -228,8 +234,9 @@ class JavaPOSDeviceControlTestGenerator {
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion-1).map[ minorVersion | 
                     '''registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_SERVICE_1«minorVersion»_RETURNING_VERSION_TOO_LARGE, "1.«minorVersion»", SERVICE_1«minorVersion», new SimpleEntry.Prop("«propertyNameReturningVersionTooLarge»", "")));'''
                 ].join('\n')»
+                
             }
-        
+            
             /**
              * @throws java.lang.Exception
              */
@@ -239,6 +246,7 @@ class JavaPOSDeviceControlTestGenerator {
                 
                 registry.removeJposEntry(OPENNAME_ALL_METHODS_THROWING_NPE);
                 registry.removeJposEntry(OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION);
+                registry.removeJposEntry(OPENNAME_THROWING_NPE_ON_GETDSVERSION);
                 
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion | 
                     '''registry.removeJposEntry(OPENNAME_SERVICE_1«minorVersion»);'''
@@ -247,7 +255,7 @@ class JavaPOSDeviceControlTestGenerator {
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion-1).map[ minorVersion | 
                     '''registry.removeJposEntry(OPENNAME_SERVICE_1«minorVersion»_RETURNING_VERSION_TOO_LARGE);'''
                 ].join('\n')»
-                
+
             }
         
             private «category.name» control;
@@ -269,6 +277,96 @@ class JavaPOSDeviceControlTestGenerator {
             public final void testCreateEventCallbacks() {
                 EventCallbacks callbacks = this.control.createEventCallbacks();
                 assertThat(callbacks, is(notNullValue()));
+            }
+            
+            @Test
+            public void testOpenTwice() throws Exception {
+                try {
+                    this.control.open(OPENNAME_SERVICE_114);
+                    try {
+                        this.control.open(OPENNAME_SERVICE_114);
+                        fail("ILLEGAL exception expected but not thrown");
+                    }
+                    catch (JposException e) {
+                        assertThat(e.getErrorCode(), is(JposConst.JPOS_E_ILLEGAL));
+                    }
+                }
+                catch (JposException e) {
+                    fail(e.getMessage());
+                }
+            }
+            
+            @Test
+            public void testOpenNotExistingDevice() throws Exception {
+                try {
+                    this.control.open("NOT_EXISTING_OPENNAME");
+                    fail("ILLEGAL exception expected but not thrown");
+                }
+                catch (JposException e) {
+                    assertThat(e.getErrorCode(), is(JposConst.JPOS_E_NOEXIST));
+                }
+            }
+            
+            @Test
+            public void testOpenNotExistingServiceClass() throws Exception {
+                try {
+                    this.control.open(OPENNAME_WITH_NOT_EXISTING_SERVICECLASS);
+                    fail("ILLEGAL exception expected but not thrown");
+                }
+                catch (JposException e) {
+                    assertThat(e.getErrorCode(), is(JposConst.JPOS_E_NOSERVICE));
+                }
+            }
+            
+            @Test
+            public void testGetStateBeforeOpen() throws Exception {
+                assertThat(this.control.getState(), is(JposConst.JPOS_S_CLOSED));
+            }
+            
+            @Test
+            public void testGetStateAfterOpen() throws Exception {
+                try {
+                    this.control.open(OPENNAME_SERVICE_1«currentUnfiedPOSMinorVersion»);
+                    assertThat(this.control.getState(), is(JposConst.JPOS_S_IDLE));
+                }
+                catch (JposException e) {
+                    fail(e.getMessage());
+                }
+            }
+            
+            @Test
+            public void testGetDeviceServiceBeforeOpen() throws Exception {
+                try {
+                    this.control.getDeviceServiceVersion();
+                    fail("CLOSED JposException expected but not thrown");
+                }
+                catch (JposException e) {
+                    assertThat("CLOSED JposException expected but a different was thrown: " + e.getErrorCode(), 
+                            e.getErrorCode(), is(JposConst.JPOS_E_CLOSED));
+                }
+            }
+            
+            @Test
+            public void testGetDeviceControlDescription() throws Exception {
+                assertThat(this.control.getDeviceControlDescription(), is("JavaPOS «category.name» Device Control"));
+            }
+            
+            @Test
+            public void testDeviceControlVersion() throws Exception {
+                assertThat(this.control.getDeviceControlVersion(), is(10«currentUnfiedPOSMinorVersion.zeroPreceded»000));
+            }
+            
+            @Test
+            public final void testOpenFailsOnGetDeviceVersionWithFailureExceptionOnNPE() {
+                try {
+                    this.control.open(OPENNAME_THROWING_NPE_ON_GETDSVERSION);
+                    fail("FAILURE JposException expected but not thrown");
+                }
+                catch (JposException e) {
+                    assertThat("FAILURE JposException expected but a different was thrown: " + e.getErrorCode(), 
+                            e.getErrorCode(), is(JposConst.JPOS_E_FAILURE));
+                    assertThat(e.getOrigException(), is(instanceOf(NullPointerException.class)));
+                }
             }
             
             «category.properties.map[testFailsWithClosedExceptionBeforeOpen].join('\n')»
@@ -797,13 +895,15 @@ class JavaPOSDeviceControlTestGenerator {
             public int getDeviceServiceVersion() throws JposException {
                 if (configuration.hasPropertyWithName("«propertyNameReturningVersionTooLarge»"))
                     return 10«(minorVersion+1).zeroPreceded»000;
+                else if (configuration.hasPropertyWithName("«propertyNameThrowingNPEOnGetDSVersion»"))
+                    throw new NullPointerException();
                 else
                     return 10«minorVersion.zeroPreceded»000;
             }
             
             @Override
             public int getState() throws JposException {
-                return JposConst.JPOS_S_CLOSED;
+                return JposConst.JPOS_S_IDLE;
             }
         
             @Override
