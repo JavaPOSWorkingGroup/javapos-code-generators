@@ -52,6 +52,7 @@ import static extension jpos.build.SynthesizeHelper.javaPOSTypeAsIdentifierPart
 import static extension jpos.build.SynthesizeHelper.parameterList
 import static jpos.build.SynthesizeHelper.CPL_LICENSE_HEADER
 import static extension jpos.build.SynthesizeHelper.zeroPreceded
+import jpos.build.UposEvent
 
 class JavaPOSDeviceControlTestGenerator {
     
@@ -169,6 +170,11 @@ class JavaPOSDeviceControlTestGenerator {
         import static org.hamcrest.MatcherAssert.assertThat;
         import static org.junit.Assert.*;
         
+        import java.util.ArrayList;
+        import java.util.List;
+        import java.util.concurrent.TimeUnit;
+        import java.util.concurrent.CountDownLatch;
+        
         import org.junit.After;
         import org.junit.AfterClass;
         import org.junit.Before;
@@ -179,6 +185,7 @@ class JavaPOSDeviceControlTestGenerator {
         import jpos.config.simple.SimpleEntry;
         import jpos.loader.JposServiceLoader;
         import jpos.services.EventCallbacks;
+        import jpos.events.*;
         
         /**
          * «category.name» device control JUnit test.
@@ -308,8 +315,48 @@ class JavaPOSDeviceControlTestGenerator {
             «category.properties.map[testFailsOnServiceWrongServiceVersion].join('\n')»
             
             «category.methods.map[testFailsOnWrongServiceVersion].join('\n')»
+            
+            «category.events.map[testEventDelivery].join('\n')»
         }
     '''
+    
+    def static testEventDelivery(UposEvent event) '''
+        @Test
+        public void test«event.name»EventDelivery() {
+            final int numberOfListeners = 5;
+            final int waitingTimeInMs = 100;
+            final CountDownLatch remainingEventsToReceive= new CountDownLatch(numberOfListeners);
+            List<«event.name»Listener> listeners = new ArrayList<>();
+            
+            try {
+                this.control.open(OPENNAME_SERVICE_1«currentUnfiedPOSMinorVersion»);
+                
+                for (int i = 0; i < numberOfListeners; i++) {
+                    «event.name»Listener listener = new «event.name»Listener() {
+                        @Override
+                        public void «event.name.toFirstLower»Occurred(«event.name»Event e) {
+                            remainingEventsToReceive.countDown();
+                        }
+                    };
+                    this.control.add«event.name»Listener(listener);
+                    listeners.add(listener);
+                }
+                
+                this.control.directIO(«event.directIOSendingCommand», null, null);
+                assertThat("not all listener received «event.name»Events within (ms)" + waitingTimeInMs, 
+                        remainingEventsToReceive.await(waitingTimeInMs, TimeUnit.MILLISECONDS), is(true));
+                
+                for («event.name»Listener listener : listeners) {
+                    this.control.remove«event.name»Listener(listener);
+                }
+            }
+            catch (JposException | InterruptedException e) {
+                fail(e.getMessage());
+            }
+        }
+    '''
+    
+    def private static directIOSendingCommand(UposEvent event) '''ControlsTestHelper.SEND_«event.name.toUpperCase»_EVENT'''
     
     def private static testFailsOnServiceWrongServiceVersion(UposProperty property) '''
         «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
@@ -663,7 +710,8 @@ class JavaPOSDeviceControlTestGenerator {
             category.deviceTestServiceClass(category.testServiceAlwaysThrowingNPEClassName, currentUnfiedPOSMinorVersion, 
                 ['throw new NullPointerException();'],
                 ['throw new NullPointerException();'],
-                ['throw new NullPointerException();']
+                ['throw new NullPointerException();'],
+                'throw new NullPointerException();'
             )
         )
 
@@ -673,10 +721,35 @@ class JavaPOSDeviceControlTestGenerator {
             category.deviceTestServiceClass(category.testServiceRethrowingJposExceptionClassName, currentUnfiedPOSMinorVersion, 
                 [throwJposExceptionCode],
                 [throwJposExceptionCode],
-                [throwJposExceptionCode]
+                [throwJposExceptionCode],
+                throwJposExceptionCode
             )
         )
 
+        val directIOBody = '''
+            switch (command) {
+            case jpos.ControlsTestHelper.SEND_DATA_EVENT:
+                this.callbacks.fireDataEvent(new DataEvent(this.callbacks.getEventSource(), 0));
+            case jpos.ControlsTestHelper.SEND_DIRECTIO_EVENT:
+                this.callbacks.fireDirectIOEvent(new DirectIOEvent(this.callbacks.getEventSource(), 1, 2, null));
+            case jpos.ControlsTestHelper.SEND_ERROR_EVENT:
+                this.callbacks.fireErrorEvent(new ErrorEvent(this.callbacks.getEventSource(), 1, 2, 3, 4));
+                break;
+            case jpos.ControlsTestHelper.SEND_OUTPUTCOMPLETE_EVENT: 
+                this.callbacks.fireOutputCompleteEvent(new OutputCompleteEvent(this.callbacks.getEventSource(), 1));
+                break;
+            case jpos.ControlsTestHelper.SEND_STATUSUPDATE_EVENT:
+                this.callbacks.fireStatusUpdateEvent(new StatusUpdateEvent(this.callbacks.getEventSource(), 1));
+                break;
+            «IF category.name == "ElectronicValueRW"»
+            case jpos.ControlsTestHelper.SEND_TRANSITION_EVENT:
+                ((EventCallbacks2)this.callbacks).fireTransitionEvent(new TransitionEvent(this.callbacks.getEventSource(), 1, 2, ""));
+                break;
+            «ENDIF»
+            default:
+                break;
+            }
+        ''' 
         (category.minorVersionAdded..currentUnfiedPOSMinorVersion)
         .forEach[ minorVersion |
             val testServiceClassName = '''«category.name»TestService1«minorVersion»'''
@@ -685,7 +758,8 @@ class JavaPOSDeviceControlTestGenerator {
                 category.deviceTestServiceClass(testServiceClassName, minorVersion, 
                     [getterBodyCode],
                     [''],
-                    ['']
+                    [''],
+                    directIOBody
                 )
             )
         ]
@@ -696,7 +770,8 @@ class JavaPOSDeviceControlTestGenerator {
     def private static deviceTestServiceClass(UposCategory category, CharSequence testServiceClassName, int minorVersion,
         (UposProperty) => CharSequence getterBodySynthesizer, 
         (UposProperty) => CharSequence setterBodySynthesizer, 
-        (UposMethod) => CharSequence methodBodySynthesizer
+        (UposMethod) => CharSequence methodBodySynthesizer,
+        CharSequence directIOBody
     ) '''
         «CPL_LICENSE_HEADER»
         
@@ -707,6 +782,7 @@ class JavaPOSDeviceControlTestGenerator {
         import jpos.config.JposEntry;
         import jpos.loader.JposServiceInstance;
         import jpos.loader.JposServiceLoader;
+        import jpos.events.*;
 
         /**
          * JavaPOS Device Service class, intended to be used for testing purposes in «category.name»Test.
@@ -715,6 +791,7 @@ class JavaPOSDeviceControlTestGenerator {
         public final class «testServiceClassName» implements jpos.services.«category.name»Service1«minorVersion», JposServiceInstance {
             
             private JposEntry configuration;
+            private EventCallbacks callbacks;
             
             @Override
             public int getDeviceServiceVersion() throws JposException {
@@ -732,13 +809,20 @@ class JavaPOSDeviceControlTestGenerator {
             @Override
             public void open(String logicalName, EventCallbacks cb) throws JposException {
                 configuration = JposServiceLoader.getManager().getEntryRegistry().getJposEntry(logicalName);
+                callbacks = cb;
             }
         
             @Override
             public void deleteInstance() throws JposException {
                 // intentionally left empty
             }
-        
+            
+            @Override
+            public void directIO(int command, int[] data, Object object) throws JposException 
+            {
+                «directIOBody»
+            }
+            
             
             «category.properties?.filter[isAServiceProperty]
             .filter[minorVersionAdded <= minorVersion]
@@ -753,7 +837,7 @@ class JavaPOSDeviceControlTestGenerator {
     def private static isAServiceProperty(UposProperty property) {
         if (property.name == 'DeviceServiceVersion')
             // skip this as it is implemented specifically
-            return false 
+            return false
         else if (property.categoryBelongingTo.name == 'ElectronicValueRW' && property.javaMethod.name == 'getCapTrainingMode')
             false
         else
@@ -761,7 +845,10 @@ class JavaPOSDeviceControlTestGenerator {
     }
     
     def private static isAServiceMethod(UposMethod method) {
-        if (method.categoryBelongingTo.name == 'Scale' && method.name == 'setTarePriority')
+        if (method.name == "directIO")
+            // skip this as it is implemented specifically
+            return false
+        else if (method.categoryBelongingTo.name == 'Scale' && method.name == 'setTarePriority')
             false
         else
             true
