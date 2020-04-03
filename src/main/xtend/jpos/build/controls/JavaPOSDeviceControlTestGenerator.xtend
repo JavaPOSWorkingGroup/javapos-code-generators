@@ -249,7 +249,7 @@ class JavaPOSDeviceControlTestGenerator {
                     public final void testGetDeviceVersion1«minorVersion»() {
                         try {
                             this.control.open(OPENNAME_SERVICE_1«minorVersion»);
-                            assertThat(this.control.getDeviceServiceVersion(), is(1_0«minorVersion.zeroPreceded»_000));
+                            assertThat(this.control.getDeviceServiceVersion(), is(10«minorVersion.zeroPreceded»000));
                         }
                         catch (JposException e) {
                             fail("«category.name».getDeviceServiceVersion() failed with " + e.getMessage());
@@ -468,11 +468,11 @@ class JavaPOSDeviceControlTestGenerator {
         }
     '''
     
-    def static defaultArguments(UposMethod method) {
+    def private static defaultArguments(UposMethod method) {
         method.parameterTypes.map[defaultArgument].join(',')
     }
     
-    def static defaultArgument(Class<?> type) {
+    def private static defaultArgument(Class<?> type) {
         switch (type) {
             
         	case int: return '0'
@@ -555,7 +555,7 @@ class JavaPOSDeviceControlTestGenerator {
             
             @Override
             public int getDeviceServiceVersion() throws JposException {
-                return 1_0«minorVersion.zeroPreceded»_000;
+                return 10«minorVersion.zeroPreceded»000;
             }
             
             @Override
@@ -584,7 +584,7 @@ class JavaPOSDeviceControlTestGenerator {
         }
     '''
     
-    def static isAServiceProperty(UposProperty property) {
+    def private static isAServiceProperty(UposProperty property) {
         if (property.name == 'DeviceServiceVersion')
             // skip this as it is implemented specifically
             return false 
@@ -594,7 +594,7 @@ class JavaPOSDeviceControlTestGenerator {
             true
     }
     
-    def static isAServiceMethod(UposMethod method) {
+    def private static isAServiceMethod(UposMethod method) {
         if (method.categoryBelongingTo.name == 'Scale' && method.name == 'setTarePriority')
             false
         else
