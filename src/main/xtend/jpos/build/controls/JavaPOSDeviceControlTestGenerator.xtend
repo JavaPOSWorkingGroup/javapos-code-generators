@@ -151,6 +151,7 @@ class JavaPOSDeviceControlTestGenerator {
     
     def private static testClassName(UposCategory category) '''«category.name»Test'''
     def private static testServiceAlwaysThrowingNPEClassName(UposCategory category) '''«category.name»TestServiceAlwaysThrowingNPE'''
+    def private static testServiceRethrowingJposExceptionClassName(UposCategory category) '''«category.name»TestServiceRethrowingJposException'''
     def private static testServiceClassName(UposCategory category, int minorVersion) '''«category.name»TestService1«minorVersion»'''
     
     /**
@@ -185,6 +186,7 @@ class JavaPOSDeviceControlTestGenerator {
         public class «category.testClassName» {
         
             private static final String OPENNAME_ALL_METHODS_THROWING_NPE = "«category.testServiceAlwaysThrowingNPEClassName»";
+            private static final String OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION = "«category.testServiceRethrowingJposExceptionClassName»";
             private static final String OPENNAME_SERVICE_10 = "«category.testServiceClassName(category.minorVersionAdded)»";
             «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion |
                 '''private static final String OPENNAME_SERVICE_1«minorVersion» = "«category.testServiceClassName(minorVersion)»";'''
@@ -197,6 +199,7 @@ class JavaPOSDeviceControlTestGenerator {
             public static void setUpBeforeClass() throws Exception {
                 JposEntryRegistry registry = JposServiceLoader.getManager().getEntryRegistry();
                 registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_THROWING_NPE, "1.«currentUnfiedPOSMinorVersion»"));
+                registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION, "1.«currentUnfiedPOSMinorVersion»"));
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion | 
                     '''registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_SERVICE_1«minorVersion», "1.«minorVersion»"));'''
                 ].join('\n')»
@@ -209,6 +212,7 @@ class JavaPOSDeviceControlTestGenerator {
             public static void tearDownAfterClass() throws Exception {
                 JposEntryRegistry registry = JposServiceLoader.getManager().getEntryRegistry();
                 registry.removeJposEntry(OPENNAME_ALL_METHODS_THROWING_NPE);
+                registry.removeJposEntry(OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION);
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion | 
                     '''registry.removeJposEntry(OPENNAME_SERVICE_1«minorVersion»);'''
                 ].join('\n')»
@@ -242,6 +246,10 @@ class JavaPOSDeviceControlTestGenerator {
             «category.properties.map[testFailsWithFailureExceptionOnNPE].join('\n')»
             
             «category.methods.map[testFailsWithFailureExceptionOnNPE].join('\n')»
+            
+            «category.properties.map[testRethrowsJposException].join('\n')»
+            
+            «category.methods.map[testRethrowsJposException].join('\n')»
             
             «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion |
                 '''
@@ -454,6 +462,44 @@ class JavaPOSDeviceControlTestGenerator {
             }
         «ENDIF»
     '''
+
+    static val jposErrMsg = "hardware error" // artificial error message for tests
+    static val jposErrorCode = "JposConst.JPOS_E_NOHARDWARE"
+    static val jposErrorCodeExt = "Integer.MAX_VALUE" 
+
+    def private static testRethrowsJposException(UposProperty property) '''
+        @Test
+        public final void test«property.getMethodName.toFirstUpper»RethrowsJposException() {
+            try {
+                this.control.open(OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION);
+                this.control.«property.getMethodName»();
+                fail("JposException expected but not thrown");
+            }
+            catch (JposException e) {
+                assertThat("JposException expected but a different was thrown: " + e.getErrorCode(),
+                        e.getErrorCode(), is(«jposErrorCode»));
+                assertThat(e.getErrorCodeExtended(), is(«jposErrorCodeExt»));
+                assertThat(e.getMessage(), is("«jposErrMsg»"));
+            }
+        }
+        «IF !property.readonly»
+            
+            @Test
+            public final void test«property.setMethodName.toFirstUpper»RethrowsJposException() {
+                try {
+                    this.control.open(OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION);
+                    this.control.«property.setMethodName»(«property.type.defaultArgument»);
+                    fail("JposException expected but not thrown");
+                }
+                catch (JposException e) {
+                    assertThat("JposException expected but a different was thrown: " + e.getErrorCode(),
+                            e.getErrorCode(), is(«jposErrorCode»));
+                    assertThat(e.getErrorCodeExtended(), is(«jposErrorCodeExt»));
+                    assertThat(e.getMessage(), is("«jposErrMsg»"));
+                }
+            }
+        «ENDIF»
+    '''
     
     def private static paramListAsNamePart(UposMethod method) {
         if (method.name == 'retrieveDeviceAuthenticationData')
@@ -462,6 +508,23 @@ class JavaPOSDeviceControlTestGenerator {
             ''
     }
     
+    def private static testRethrowsJposException(UposMethod method) '''
+        @Test
+        public final void test«method.name.toFirstUpper»«method.paramListAsNamePart»RethrowsJposException() {
+            try {
+                this.control.open(OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION);
+                this.control.«method.name»(«method.defaultArguments»);
+                fail("JposException expected but not thrown");
+            }
+            catch (JposException e) {
+                assertThat("JposException expected but a different was thrown: " + e.getErrorCode(),
+                        e.getErrorCode(), is(«jposErrorCode»));
+                assertThat(e.getErrorCodeExtended(), is(«jposErrorCodeExt»));
+                assertThat(e.getMessage(), is("«jposErrMsg»"));
+            }
+        }
+    '''
+
     def private static testFailsWithFailureExceptionOnNPE(UposMethod method) '''
         @Test
         public final void test«method.name.toFirstUpper»FailsWithFailureExceptionOnNPE«method.paramListAsNamePart»() {
@@ -566,6 +629,16 @@ class JavaPOSDeviceControlTestGenerator {
             )
         )
 
+        val String throwJposExceptionCode = '''throw new JposException(«jposErrorCode», «jposErrorCodeExt», "«jposErrMsg»");'''
+        SynthesizeHelper.generateFile(
+            new File('''«generatedSourceDir»/services''', '''«category.testServiceRethrowingJposExceptionClassName».java'''), 
+            category.deviceTestServiceClass(category.testServiceRethrowingJposExceptionClassName, currentUnfiedPOSMinorVersion, 
+                [throwJposExceptionCode],
+                [throwJposExceptionCode],
+                [throwJposExceptionCode]
+            )
+        )
+
         (category.minorVersionAdded..currentUnfiedPOSMinorVersion)
         .forEach[ minorVersion |
             val testServiceClassName = '''«category.name»TestService1«minorVersion»'''
@@ -582,7 +655,7 @@ class JavaPOSDeviceControlTestGenerator {
     
     def private static getterBodyCode(UposProperty property) '''return «property.type.defaultArgument»;'''      
     
-    def private static deviceTestServiceClass(UposCategory category, String testServiceClassName, int minorVersion,
+    def private static deviceTestServiceClass(UposCategory category, CharSequence testServiceClassName, int minorVersion,
         (UposProperty) => CharSequence getterBodySynthesizer, 
         (UposProperty) => CharSequence setterBodySynthesizer, 
         (UposMethod) => CharSequence methodBodySynthesizer
