@@ -538,6 +538,8 @@ class JavaPOSDeviceControlTestGenerator {
         (UposProperty) => CharSequence setterBodySynthesizer, 
         (UposMethod) => CharSequence methodBodySynthesizer
     ) '''
+        «CPL_LICENSE_HEADER»
+        
         package jpos.services;
         
         import jpos.JposConst;
