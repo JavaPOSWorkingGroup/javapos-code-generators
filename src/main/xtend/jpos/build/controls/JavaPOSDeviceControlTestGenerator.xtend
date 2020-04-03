@@ -259,6 +259,7 @@ class JavaPOSDeviceControlTestGenerator {
             ].join('\n')»
             
             «category.properties.map[testFailsOnServiceVersionBeforeAdded].join('\n')»
+            «category.methods.map[testFailsOnServiceVersionBeforeAdded].join('\n')»
         }
     '''
     
@@ -355,6 +356,53 @@ class JavaPOSDeviceControlTestGenerator {
             »
             «ENDIF»
         «ENDIF»
+    '''
+    
+    def private static testFailsOnServiceVersionBeforeAdded(UposMethod method) '''
+        «IF method.minorVersionAdded > method.categoryBelongingTo.minorVersionAdded»
+            @Test
+            public void test«method.name.toFirstUpper»«method.paramListAsNamePart»FailsOnServiceVersionBeforeAdded() {
+                try {
+                    this.control.open(OPENNAME_SERVICE_1«method.minorVersionAdded-1»);
+                    this.control.«method.name»(«method.defaultArguments»);
+                    fail("NOSERVICE JposException expected but not thrown");
+                }
+                catch (JposException e) {
+                    assertThat("NOSERVICE JposException expected but a different was thrown: " + e.getErrorCode(), 
+                            e.getErrorCode(), is(JposConst.JPOS_E_NOSERVICE));
+                }
+            }
+            
+        «ENDIF»
+        
+        @Test
+        public void test«method.name.toFirstUpper»«method.paramListAsNamePart»CalledOnServiceVersionWhenAdded() throws Exception {
+            try {
+                this.control.open(OPENNAME_SERVICE_1«method.minorVersionAdded»);
+                this.control.«method.name»(«method.defaultArguments»);
+            }
+            catch (JposException e) {
+                fail(e.getMessage());
+            }
+        }
+        
+        «if (method.minorVersionAdded < currentUnfiedPOSMinorVersion) {
+            (method.minorVersionAddedButNotZero+1..currentUnfiedPOSMinorVersion)
+            .map[ minorVersion |
+                '''
+                    @Test
+                    public void test«method.name.toFirstUpper»«method.paramListAsNamePart»CalledOnServiceVersion1«minorVersion»() {
+                        try {
+                            this.control.open(OPENNAME_SERVICE_1«minorVersion»);
+                            this.control.«method.name»(«method.defaultArguments»);
+                        }
+                        catch (JposException e) {
+                            fail(e.getMessage());
+                        }
+                    }
+                '''
+            ].join('\n')
+        }»
     '''
     
     def private static minorVersionAddedButNotZero(UposFeature propertyOrMethod) {
