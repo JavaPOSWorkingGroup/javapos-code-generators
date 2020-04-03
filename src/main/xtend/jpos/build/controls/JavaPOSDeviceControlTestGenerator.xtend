@@ -258,12 +258,13 @@ class JavaPOSDeviceControlTestGenerator {
                 '''
             ].join('\n')»
             
-            «category.properties.map[testFailsOnServiceVersionBeforeAdded].join('\n')»
-            «category.methods.map[testFailsOnServiceVersionBeforeAdded].join('\n')»
+            «category.properties.map[testFailsOnServiceWrongServiceVersion].join('\n')»
+            
+            «category.methods.map[testFailsOnWrongServiceVersion].join('\n')»
         }
     '''
     
-    def private static testFailsOnServiceVersionBeforeAdded(UposProperty property) '''
+    def private static testFailsOnServiceWrongServiceVersion(UposProperty property) '''
         «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
             @Test
             public void test«property.getMethodName.toFirstUpper»FailsOnServiceVersionBeforeAdded() {
@@ -358,7 +359,7 @@ class JavaPOSDeviceControlTestGenerator {
         «ENDIF»
     '''
     
-    def private static testFailsOnServiceVersionBeforeAdded(UposMethod method) '''
+    def private static testFailsOnWrongServiceVersion(UposMethod method) '''
         «IF method.minorVersionAdded > method.categoryBelongingTo.minorVersionAdded»
             @Test
             public void test«method.name.toFirstUpper»«method.paramListAsNamePart»FailsOnServiceVersionBeforeAdded() {
