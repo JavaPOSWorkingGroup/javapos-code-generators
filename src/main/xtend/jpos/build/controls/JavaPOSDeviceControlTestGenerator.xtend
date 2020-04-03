@@ -153,6 +153,7 @@ class JavaPOSDeviceControlTestGenerator {
     def private static testServiceAlwaysThrowingNPEClassName(UposCategory category) '''«category.name»TestServiceAlwaysThrowingNPE'''
     def private static testServiceRethrowingJposExceptionClassName(UposCategory category) '''«category.name»TestServiceRethrowingJposException'''
     def private static testServiceClassName(UposCategory category, int minorVersion) '''«category.name»TestService1«minorVersion»'''
+    static val propertyNameReturningVersionTooLarge = 'returnVersionTooLarge'
     
     /**
      * Synthesizes the code for a particular UnifedPOS method or property passed.
@@ -175,6 +176,7 @@ class JavaPOSDeviceControlTestGenerator {
         import org.junit.Test;
         
         import jpos.config.JposEntryRegistry;
+        import jpos.config.simple.SimpleEntry;
         import jpos.loader.JposServiceLoader;
         import jpos.services.EventCallbacks;
         
@@ -185,23 +187,39 @@ class JavaPOSDeviceControlTestGenerator {
          */
         public class «category.testClassName» {
         
-            private static final String OPENNAME_ALL_METHODS_THROWING_NPE = "«category.testServiceAlwaysThrowingNPEClassName»";
-            private static final String OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION = "«category.testServiceRethrowingJposExceptionClassName»";
-            private static final String OPENNAME_SERVICE_10 = "«category.testServiceClassName(category.minorVersionAdded)»";
+            private static final String SERVICE_ALL_METHODS_THROWING_NPE = "«category.testServiceAlwaysThrowingNPEClassName»";
+            private static final String SERVICE_ALL_METHODS_RETHROWING_JPOSEXCEPTION = "«category.testServiceRethrowingJposExceptionClassName»";
             «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion |
-                '''private static final String OPENNAME_SERVICE_1«minorVersion» = "«category.testServiceClassName(minorVersion)»";'''
+                '''private static final String SERVICE_1«minorVersion» = "«category.testServiceClassName(minorVersion)»";'''
             ].join('\n')»
-        
+            
+            private static final String OPENNAME_ALL_METHODS_THROWING_NPE = SERVICE_ALL_METHODS_THROWING_NPE;
+            private static final String OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION = SERVICE_ALL_METHODS_RETHROWING_JPOSEXCEPTION;
+            private static final String OPENNAME_SERVICE_10 = SERVICE_1«category.minorVersionAdded»;
+            «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion |
+                '''private static final String OPENNAME_SERVICE_1«minorVersion» = SERVICE_1«minorVersion»;'''
+            ].join('\n')»
+            
+            «(category.minorVersionAdded..currentUnfiedPOSMinorVersion-1).map[ minorVersion |
+                '''private static final String OPENNAME_SERVICE_1«minorVersion»_RETURNING_VERSION_TOO_LARGE = "«category.testServiceClassName(minorVersion)»ReturningVersionTooLarge";'''
+            ].join('\n')»
+            
             /**
              * @throws java.lang.Exception
              */
             @BeforeClass
             public static void setUpBeforeClass() throws Exception {
                 JposEntryRegistry registry = JposServiceLoader.getManager().getEntryRegistry();
-                registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_THROWING_NPE, "1.«currentUnfiedPOSMinorVersion»"));
-                registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION, "1.«currentUnfiedPOSMinorVersion»"));
+                
+                registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_THROWING_NPE, "1.«currentUnfiedPOSMinorVersion»", SERVICE_ALL_METHODS_THROWING_NPE));
+                registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION, "1.«currentUnfiedPOSMinorVersion»", SERVICE_ALL_METHODS_RETHROWING_JPOSEXCEPTION));
+                
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion | 
-                    '''registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_SERVICE_1«minorVersion», "1.«minorVersion»"));'''
+                    '''registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_SERVICE_1«minorVersion», "1.«minorVersion»", SERVICE_1«minorVersion»));'''
+                ].join('\n')»
+                
+                «(category.minorVersionAdded..currentUnfiedPOSMinorVersion-1).map[ minorVersion | 
+                    '''registry.addJposEntry(ControlsTestHelper.createJposEntry("«category.name»", OPENNAME_SERVICE_1«minorVersion»_RETURNING_VERSION_TOO_LARGE, "1.«minorVersion»", SERVICE_1«minorVersion», new SimpleEntry.Prop("«propertyNameReturningVersionTooLarge»", "")));'''
                 ].join('\n')»
             }
         
@@ -211,11 +229,18 @@ class JavaPOSDeviceControlTestGenerator {
             @AfterClass
             public static void tearDownAfterClass() throws Exception {
                 JposEntryRegistry registry = JposServiceLoader.getManager().getEntryRegistry();
+                
                 registry.removeJposEntry(OPENNAME_ALL_METHODS_THROWING_NPE);
                 registry.removeJposEntry(OPENNAME_ALL_METHODS_RETHROWING_JPOSEXCEPTION);
+                
                 «(category.minorVersionAdded..currentUnfiedPOSMinorVersion).map[ minorVersion | 
                     '''registry.removeJposEntry(OPENNAME_SERVICE_1«minorVersion»);'''
                 ].join('\n')»
+                
+                «(category.minorVersionAdded..currentUnfiedPOSMinorVersion-1).map[ minorVersion | 
+                    '''registry.removeJposEntry(OPENNAME_SERVICE_1«minorVersion»_RETURNING_VERSION_TOO_LARGE);'''
+                ].join('\n')»
+                
             }
         
             private «category.name» control;
@@ -266,6 +291,20 @@ class JavaPOSDeviceControlTestGenerator {
                 '''
             ].join('\n')»
             
+            «(category.minorVersionAdded..currentUnfiedPOSMinorVersion-1).map[ minorVersion |
+                '''
+                        @Test
+                        public void testOpenOnService1«minorVersion»ReturningVersionTooLarge() {
+                            try {
+                                this.control.open(OPENNAME_SERVICE_1«minorVersion»_RETURNING_VERSION_TOO_LARGE);
+                                fail("NOSERVICE exception expected but not thrown");
+                            }
+                            catch (JposException e) {
+                                assertThat(e.getErrorCode(), is(JposConst.JPOS_E_NOSERVICE));
+                            }
+                        }
+                '''
+            ].join('\n')»
             «category.properties.map[testFailsOnServiceWrongServiceVersion].join('\n')»
             
             «category.methods.map[testFailsOnWrongServiceVersion].join('\n')»
@@ -619,13 +658,12 @@ class JavaPOSDeviceControlTestGenerator {
      * @param outputDir the directory the java file has to be written to 
      */
     def private static synthesizeTestDeviceServiceFiles(UposCategory category) {
-        val testServiceAlwaysThrowingNPEClassName = '''«category.name»TestServiceAlwaysThrowingNPE'''
         SynthesizeHelper.generateFile(
-            new File('''«generatedSourceDir»/services''', '''«testServiceAlwaysThrowingNPEClassName».java'''), 
-            category.deviceTestServiceClass(testServiceAlwaysThrowingNPEClassName, currentUnfiedPOSMinorVersion, 
-                ['''throw new NullPointerException();'''],
-                ['''throw new NullPointerException();'''],
-                ['''throw new NullPointerException();''']
+            new File('''«generatedSourceDir»/services''', '''«category.testServiceAlwaysThrowingNPEClassName».java'''), 
+            category.deviceTestServiceClass(category.testServiceAlwaysThrowingNPEClassName, currentUnfiedPOSMinorVersion, 
+                ['throw new NullPointerException();'],
+                ['throw new NullPointerException();'],
+                ['throw new NullPointerException();']
             )
         )
 
@@ -666,18 +704,24 @@ class JavaPOSDeviceControlTestGenerator {
         
         import jpos.JposConst;
         import jpos.JposException;
+        import jpos.config.JposEntry;
         import jpos.loader.JposServiceInstance;
-        import jpos.services.EventCallbacks;
-        
+        import jpos.loader.JposServiceLoader;
+
         /**
          * JavaPOS Device Service class, intended to be used for testing purposes in «category.name»Test.
          *
          */
         public final class «testServiceClassName» implements jpos.services.«category.name»Service1«minorVersion», JposServiceInstance {
             
+            private JposEntry configuration;
+            
             @Override
             public int getDeviceServiceVersion() throws JposException {
-                return 10«minorVersion.zeroPreceded»000;
+                if (configuration.hasPropertyWithName("«propertyNameReturningVersionTooLarge»"))
+                    return 10«(minorVersion+1).zeroPreceded»000;
+                else
+                    return 10«minorVersion.zeroPreceded»000;
             }
             
             @Override
@@ -687,7 +731,7 @@ class JavaPOSDeviceControlTestGenerator {
         
             @Override
             public void open(String logicalName, EventCallbacks cb) throws JposException {
-                // intentionally left empty
+                configuration = JposServiceLoader.getManager().getEntryRegistry().getJposEntry(logicalName);
             }
         
             @Override
