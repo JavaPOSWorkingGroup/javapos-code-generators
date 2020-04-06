@@ -173,8 +173,7 @@ class JavaPOSDeviceControlTestGenerator {
         
         import java.util.ArrayList;
         import java.util.List;
-        import java.util.concurrent.TimeUnit;
-        import java.util.concurrent.CountDownLatch;
+        import java.util.concurrent.atomic.AtomicInteger;
         
         import org.junit.After;
         import org.junit.AfterClass;
@@ -422,8 +421,7 @@ class JavaPOSDeviceControlTestGenerator {
         @Test
         public void test«event.name»EventDelivery() {
             final int numberOfListeners = 5;
-            final int waitingTimeInMs = 100;
-            final CountDownLatch remainingEventsToReceive= new CountDownLatch(numberOfListeners);
+            final AtomicInteger remainingEventsToReceive = new AtomicInteger(numberOfListeners); // no concurrency, just boxed decrement is used 
             List<«event.name»Listener> listeners = new ArrayList<«event.name»Listener>();
             
             try {
@@ -433,7 +431,7 @@ class JavaPOSDeviceControlTestGenerator {
                     «event.name»Listener listener = new «event.name»Listener() {
                         @Override
                         public void «event.name.toFirstLower»Occurred(«event.name»Event e) {
-                            remainingEventsToReceive.countDown();
+                            remainingEventsToReceive.decrementAndGet();
                         }
                     };
                     this.control.add«event.name»Listener(listener);
@@ -441,17 +439,14 @@ class JavaPOSDeviceControlTestGenerator {
                 }
                 
                 this.control.directIO(«event.directIOSendingCommand», null, null);
-                assertThat("not all listener received «event.name»Events within (ms)" + waitingTimeInMs, 
-                        remainingEventsToReceive.await(waitingTimeInMs, TimeUnit.MILLISECONDS), is(true));
+                assertThat("not all listener received «event.name»Events", 
+                        remainingEventsToReceive.get(), is(0));
                 
                 for («event.name»Listener listener : listeners) {
                     this.control.remove«event.name»Listener(listener);
                 }
             }
             catch (JposException e) {
-                fail(e.getMessage());
-            }
-            catch (InterruptedException e) {
                 fail(e.getMessage());
             }
         }
