@@ -1,29 +1,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Build Script for building JavaPOS Contracts Library
+// Build Script for maintaining Eclipse meta data file for JavaPOS code generators
 // 
-// Author: denis.kuniss@wincor-nixdorf.com (2016)
+// Author: denis.kuniss@dieboldnixdorf.com (2021)
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 plugins {
-    id 'com.gradle.build-scan' version '3.1.1'
 	id 'java'
-	id "org.xtext.xtend" version "2.0.8"
+	id "org.xtext.xtend" version "3.0.0-M1"
 	id 'eclipse'
-//	id 'maven' // comment this in and the next line out for populating to a local Maven repository for testing purposes
-    id 'com.github.oehme.sobula.bintray-release' version '0.6.7'
 }
 
 ext.githubProjectUrl = 'https://github.com/JavaPOSWorkingGroup/javapos-code-generators'
-ext.travisProjectUrl = 'https://travis-ci.org/JavaPOSWorkingGroup/javapos-code-generators'
-
-buildScan {
-    termsOfServiceUrl = "https://gradle.com/terms-of-service"
-    termsOfServiceAgree = "yes"
-
-	apply from: 'buildScan.gradle'
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Names and Versions
@@ -46,14 +35,14 @@ sourceSets {
 }
 
 repositories {
-	jcenter()
+	mavenCentral()
 }
 
 dependencies {
-	compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.9.+'
+	compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.25.+'
 	compile 'org.javapos:javapos-contracts:1.14.3'
-
-    compileOnly 'junit:junit:4.+'
+    compile 'junit:junit:4.+'
+    
     testCompile 'org.hamcrest:hamcrest-library:1.3'
 }
 
@@ -73,46 +62,3 @@ jar {
 	manifest = javaposManifest
 }
 
-sourceJar {
-	manifest = javaposManifest
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Artifact Upload
-///////////////////////////////////////////////////////////////////////////////
-
-if (project.plugins.hasPlugin('com.github.oehme.sobula.bintray-release')) 
-{ // evaluates only on travis-ci.org for releasing
-	group = "org.javapos"
-	description = "JavaPOS Contracts Library"
-	 
-	contacts {
-	    "builder@javapos.org" {
-	        moniker "JavaPOS Working Group"
-	        roles "owner"
-	        github "JavaPOSWorkingGroup"
-	    }
-	}
-	
-	bintray.user = "javaposworkinggroup"
-	bintray.pkg.version.mavenCentralSync.user = "kuniss"
-}
-
-if (project.plugins.hasPlugin('maven')) 
-{ // evaluates only at development environment, not at travis-ci.org
-
-	artifacts {
-		archives jar
-	}
-	
-	uploadArchives {
-	    repositories {
-	        mavenDeployer {
-	            repository(url: "file:$localTestFileRepositoryDir")
-	            pom.artifactId = artifactName
-	            pom.groupId = groupId
-	            pom.version = version
-	        }
-	    }
-	}
-}
