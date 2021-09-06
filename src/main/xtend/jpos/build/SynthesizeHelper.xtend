@@ -58,7 +58,7 @@ class SynthesizeHelper {
     	if (version == 0)
     		'00'
     	else
-    		'''1«version»'''
+    		'''1Â«versionÂ»'''
     }
     
     /**
@@ -138,7 +138,7 @@ class SynthesizeHelper {
      * E.g. "int 'param-name1', long 'param-name1', boolean 'param-name3'"
      */
     def static parameterList(UposMethod method) {
-    	method.javaMethod.parameters.map['''«type.javaPOSType» «name»'''].join(', ')
+    	method.javaMethod.parameters.map['''Â«type.javaPOSTypeÂ» Â«nameÂ»'''].join(', ')
     }
     
     /**

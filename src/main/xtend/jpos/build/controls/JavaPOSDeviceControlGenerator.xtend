@@ -169,7 +169,7 @@ class JavaPOSDeviceControlGenerator {
      */
     def private static synthesizeDeviceControlSourceFile(UposCategory category) {
         SynthesizeHelper.generateFile(
-            new File(generatedSourceDir, '''«category.name».java'''), 
+            new File(generatedSourceDir, '''Â«category.nameÂ».java'''), 
             category.deviceControlClass
         )
     }
@@ -197,7 +197,7 @@ class JavaPOSDeviceControlGenerator {
         // software or its derivatives.Permission to use, copy, modify, and distribute
         // the software and its documentation for any purpose is hereby granted.
         //
-        // «category.name».java - A JavaPOS 1.«currentUnfiedPOSMinorVersion».0 device control
+        // Â«category.nameÂ».java - A JavaPOS 1.Â«currentUnfiedPOSMinorVersionÂ».0 device control
         //
         //------------------------------------------------------------------------------
         
@@ -208,57 +208,57 @@ class JavaPOSDeviceControlGenerator {
         import java.util.Vector;
         import jpos.loader.*;
         
-        public class «category.name»
+        public class Â«category.nameÂ»
             extends BaseJposControl
-            implements «category.name»Control1«currentUnfiedPOSMinorVersion», JposConst
+            implements Â«category.nameÂ»Control1Â«currentUnfiedPOSMinorVersionÂ», JposConst
         {
             //--------------------------------------------------------------------------
             // Variables
             //--------------------------------------------------------------------------
         
-            «supportedUnifiedPOSMinorVersionRange
+            Â«supportedUnifiedPOSMinorVersionRange
                 .filter[it >= category.minorVersionAdded]
-                .map[minorVersion |'''protected «category.name»Service1«minorVersion» service1«minorVersion»;''']
-                .join('\n')»
-            «category.events?.map[deviceControlEventListenersDeclaration]?.join»
+                .map[minorVersion |'''protected Â«category.nameÂ»Service1Â«minorVersionÂ» service1Â«minorVersionÂ»;''']
+                .join('\n')Â»
+            Â«category.events?.map[deviceControlEventListenersDeclaration]?.joinÂ»
             
         
             //--------------------------------------------------------------------------
             // Constructor
             //--------------------------------------------------------------------------
         
-            public «category.name»()
+            public Â«category.nameÂ»()
             {
                 // Initialize base class instance data
-                deviceControlDescription = "JavaPOS «category.name» Device Control";
-                deviceControlVersion = deviceVersion1«currentUnfiedPOSMinorVersion»;
+                deviceControlDescription = "JavaPOS Â«category.nameÂ» Device Control";
+                deviceControlVersion = deviceVersion1Â«currentUnfiedPOSMinorVersionÂ»;
                 
                 // Initialize instance data. Initializations are commented out for
                 // efficiency if the Java default is correct.
-                «supportedUnifiedPOSMinorVersionRange
+                Â«supportedUnifiedPOSMinorVersionRange
                     .filter[it >= category.minorVersionAdded]
-                    .map[minorVersion | '''//service1«minorVersion» = null;''']
-                    .join('\n')»
-                «category.events?.map[deviceControlEventListenersInitialization]?.join»
+                    .map[minorVersion | '''//service1Â«minorVersionÂ» = null;''']
+                    .join('\n')Â»
+                Â«category.events?.map[deviceControlEventListenersInitialization]?.joinÂ»
             }
             
             //--------------------------------------------------------------------------
             // Capabilities
             //--------------------------------------------------------------------------
             
-            «category.properties?.filter[name.startsWith("Cap")].map[deviceControlProperty]?.join('\n')»
+            Â«category.properties?.filter[name.startsWith("Cap")].map[deviceControlProperty]?.join('\n')Â»
             
             //--------------------------------------------------------------------------
             // Properties
             //--------------------------------------------------------------------------
             
-            «category.properties?.filter[!name.startsWith("Cap")].map[deviceControlProperty]?.join('\n')»
+            Â«category.properties?.filter[!name.startsWith("Cap")].map[deviceControlProperty]?.join('\n')Â»
             
             //--------------------------------------------------------------------------
             // Methods
             //--------------------------------------------------------------------------
             
-            «category.methods?.map[deviceControlMethod]?.join('\n')»
+            Â«category.methods?.map[deviceControlMethod]?.join('\n')Â»
             
             //--------------------------------------------------------------------------
             // Framework Methods
@@ -267,7 +267,7 @@ class JavaPOSDeviceControlGenerator {
             // Create an EventCallbacks interface implementation object for this Control
             protected EventCallbacks createEventCallbacks()
             {
-              return new «category.name»Callbacks();
+              return new Â«category.nameÂ»Callbacks();
             }
             
             // Store the reference to the Device Service
@@ -277,19 +277,19 @@ class JavaPOSDeviceControlGenerator {
                 // Special case: service == null to free references
                 if(service == null)
                 {
-                    «supportedUnifiedPOSMinorVersionRange
+                    Â«supportedUnifiedPOSMinorVersionRange
                         .filter[it >= category.minorVersionAdded]
-                        .map[minorVersion|'''service1«minorVersion» = null;''']
-                        .join('\n')»
+                        .map[minorVersion|'''service1Â«minorVersionÂ» = null;''']
+                        .join('\n')Â»
                 }
                 else
                 {
                     // Make sure that the service actually conforms to the interfaces it
                     // claims to.
-                    «supportedUnifiedPOSMinorVersionRange
+                    Â«supportedUnifiedPOSMinorVersionRange
                         .filter[it >= category.minorVersionAdded]
                         .map[minorVersion|category.serviceAssignment(minorVersion)]
-                        .join»
+                        .joinÂ»
                     
                 }
             }
@@ -298,21 +298,21 @@ class JavaPOSDeviceControlGenerator {
             // Event Listener Methods
             //--------------------------------------------------------------------------
             
-            «category.events?.map[eventRegistrationMethods].join»
+            Â«category.events?.map[eventRegistrationMethods].joinÂ»
             
             //--------------------------------------------------------------------------
             // EventCallbacks inner class
             //--------------------------------------------------------------------------
             
-            protected class «category.name»Callbacks
-                implements «category.callbacksToBeImplemented»
+            protected class Â«category.nameÂ»Callbacks
+                implements Â«category.callbacksToBeImplementedÂ»
             {
                 public BaseControl getEventSource()
                 {
-                    return (BaseControl)«category.name».this;
+                    return (BaseControl)Â«category.nameÂ».this;
                 }
                 
-                «allEvents.map[fireEventMethod(category)]?.join('\n')»
+                Â«allEvents.map[fireEventMethod(category)]?.join('\n')Â»
             }
         }
     '''
@@ -331,16 +331,16 @@ class JavaPOSDeviceControlGenerator {
     def private static serviceAssignment(UposCategory category, int minorVersionNumber) {
         var appliedMinorVersion = category.restrictedMiniumMinorVersionNumber(minorVersionNumber)
         '''
-            if(serviceVersion >= deviceVersion1«minorVersionNumber»)
+            if(serviceVersion >= deviceVersion1Â«minorVersionNumberÂ»)
             {
                 try
                 {
-                    service1«minorVersionNumber» = («category.name»Service1«appliedMinorVersion»)service;
+                    service1Â«minorVersionNumberÂ» = (Â«category.nameÂ»Service1Â«appliedMinorVersionÂ»)service;
                 }
                 catch(Exception e)
                 {
                     throw new JposException(JPOS_E_NOSERVICE,
-                                            "Service does not fully implement «category.name»Service1«minorVersionNumber» interface",
+                                            "Service does not fully implement Â«category.nameÂ»Service1Â«minorVersionNumberÂ» interface",
                                             e);
                 }
             }
@@ -365,7 +365,7 @@ class JavaPOSDeviceControlGenerator {
                 '''
         	default: 
                 '''
-                    public void «method.name»(«method.parameterList»)
+                    public void Â«method.nameÂ»(Â«method.parameterListÂ»)
                         throws JposException
                     {
                         // Make sure control is opened
@@ -374,19 +374,19 @@ class JavaPOSDeviceControlGenerator {
                             throw new JposException(JPOS_E_CLOSED, "Control not opened");
                         }
                         
-                        «IF method.minorVersionAdded > method.categoryBelongingTo.minorVersionAdded»
-                            // Make sure service supports at least version 1.«method.minorVersionAdded».0
-                            if(serviceVersion < deviceVersion«method.versionWhenAddedToUPOS»)
+                        Â«IF method.minorVersionAdded > method.categoryBelongingTo.minorVersionAddedÂ»
+                            // Make sure service supports at least version 1.Â«method.minorVersionAddedÂ».0
+                            if(serviceVersion < deviceVersionÂ«method.versionWhenAddedToUPOSÂ»)
                             {
                                 throw new JposException(JPOS_E_NOSERVICE,
-                                                        "Device Service is not 1.«method.minorVersionAdded».0 compliant.");
+                                                        "Device Service is not 1.Â«method.minorVersionAddedÂ».0 compliant.");
                             }
-                        «ENDIF»
+                        Â«ENDIFÂ»
                         
                         // Perform the operation
                         try
                         {
-                            service«method.versionWhenAddedToUPOS».«method.name»(«method.argumentList»);«»
+                            serviceÂ«method.versionWhenAddedToUPOSÂ».Â«method.nameÂ»(Â«method.argumentListÂ»);Â«Â»
                         }
                         catch(JposException je)
                         {
@@ -403,11 +403,11 @@ class JavaPOSDeviceControlGenerator {
     }
     
     def private static deviceControlEventListenersDeclaration(UposEvent event) '''
-        protected Vector «event.name.toFirstLower»Listeners;
+        protected Vector Â«event.name.toFirstLowerÂ»Listeners;
     '''
 
     def private static deviceControlEventListenersInitialization(UposEvent event) '''
-        «event.name.toFirstLower»Listeners = new Vector();
+        Â«event.name.toFirstLowerÂ»Listeners = new Vector();
     '''
     
     def private static String deviceControlProperty(UposProperty property) {
@@ -430,14 +430,14 @@ class JavaPOSDeviceControlGenerator {
     }
     
     def private static String deviceControlPropertyMethodWithJposException(UposProperty property) '''
-        «property.deviceControlGetPropertyMethod»
-        «property.deviceControlSetPropertyMethod»
+        Â«property.deviceControlGetPropertyMethodÂ»
+        Â«property.deviceControlSetPropertyMethodÂ»
     '''
     
     def private static String deviceControlSetPropertyMethodForWronglySpelledScaleTarePriority(UposMethod method) {
         val setterVariableName = method.javaMethod.parameters.head.name
         '''
-            public void «method.name»(«method.javaMethod.parameters.head.type» «setterVariableName»)
+            public void Â«method.nameÂ»(Â«method.javaMethod.parameters.head.typeÂ» Â«setterVariableNameÂ»)
                 throws JposException
             {
                 // Make sure control is opened
@@ -446,17 +446,17 @@ class JavaPOSDeviceControlGenerator {
                     throw new JposException(JPOS_E_CLOSED, "Control not opened");
                 }
                 
-                // Make sure service supports at least version 1.«method.minorVersionAdded».0
-                if(serviceVersion < deviceVersion«method.versionWhenAddedToUPOS»)
+                // Make sure service supports at least version 1.Â«method.minorVersionAddedÂ».0
+                if(serviceVersion < deviceVersionÂ«method.versionWhenAddedToUPOSÂ»)
                 {
                     throw new JposException(JPOS_E_NOSERVICE,
-                                            "Device Service is not 1.«method.minorVersionAdded».0 compliant.");
+                                            "Device Service is not 1.Â«method.minorVersionAddedÂ».0 compliant.");
                 }
                 
                 // Perform the operation
                 try
                 {
-                    service«method.versionWhenAddedToUPOS».setTarePrioity(«setterVariableName»);
+                    serviceÂ«method.versionWhenAddedToUPOSÂ».setTarePrioity(Â«setterVariableNameÂ»);
                 }
                 catch(JposException je)
                 {
@@ -473,7 +473,7 @@ class JavaPOSDeviceControlGenerator {
 
     
     def private static String deviceControlGetPropertyMethod(UposProperty property) '''
-        public «property.javaPOSType» get«property.name»()
+        public Â«property.javaPOSTypeÂ» getÂ«property.nameÂ»()
             throws JposException
         {
             // Make sure control is opened
@@ -482,19 +482,19 @@ class JavaPOSDeviceControlGenerator {
                 throw new JposException(JPOS_E_CLOSED, "Control not opened");
             }
             
-            «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
-                // Make sure service supports at least version 1.«property.minorVersionAdded».0
-                if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
+            Â«IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAddedÂ»
+                // Make sure service supports at least version 1.Â«property.minorVersionAddedÂ».0
+                if(serviceVersion < deviceVersionÂ«property.versionWhenAddedToUPOSÂ»)
                 {
                     throw new JposException(JPOS_E_NOSERVICE,
-                                            "Device Service is not 1.«property.minorVersionAdded».0 compliant.");
+                                            "Device Service is not 1.Â«property.minorVersionAddedÂ».0 compliant.");
                 }
-            «ENDIF»
+            Â«ENDIFÂ»
             
             // Perform the operation
             try
             {
-                return service«property.versionWhenAddedToUPOS».get«property.name»();
+                return serviceÂ«property.versionWhenAddedToUPOSÂ».getÂ«property.nameÂ»();
             }
             catch(JposException je)
             {
@@ -513,13 +513,13 @@ class JavaPOSDeviceControlGenerator {
      * which lacks of the "get" prefix in the Java method breaking our generator schema.
      */
     def private static String deviceControlGetPropertyMethodForWronglyNamedElectronicValueRWCapTrainingMode(UposProperty property) '''
-        public «property.javaPOSType» «property.name»()
+        public Â«property.javaPOSTypeÂ» Â«property.nameÂ»()
             throws JposException
         {
-        	return get«property.name»();
+        	return getÂ«property.nameÂ»();
         }
 
-        public «property.javaPOSType» get«property.name»()
+        public Â«property.javaPOSTypeÂ» getÂ«property.nameÂ»()
             throws JposException
         {
             // Make sure control is opened
@@ -528,17 +528,17 @@ class JavaPOSDeviceControlGenerator {
                 throw new JposException(JPOS_E_CLOSED, "Control not opened");
             }
             
-            // Make sure service supports at least version 1.«property.minorVersionAdded».0
-            if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
+            // Make sure service supports at least version 1.Â«property.minorVersionAddedÂ».0
+            if(serviceVersion < deviceVersionÂ«property.versionWhenAddedToUPOSÂ»)
             {
                 throw new JposException(JPOS_E_NOSERVICE,
-                                        "Device Service is not 1.«property.minorVersionAdded».0 compliant.");
+                                        "Device Service is not 1.Â«property.minorVersionAddedÂ».0 compliant.");
             }
             
             // Perform the operation
             try
             {
-                return service«property.versionWhenAddedToUPOS».«property.name»();
+                return serviceÂ«property.versionWhenAddedToUPOSÂ».Â«property.nameÂ»();
             }
             catch(JposException je)
             {
@@ -557,7 +557,7 @@ class JavaPOSDeviceControlGenerator {
         if (!property.readonly) {
         	val setterVariableName = property.javaMethod.parameters.head.name
             '''
-                public void set«property.name»(«property.javaPOSType» «setterVariableName»)
+                public void setÂ«property.nameÂ»(Â«property.javaPOSTypeÂ» Â«setterVariableNameÂ»)
                     throws JposException
                 {
                     // Make sure control is opened
@@ -567,19 +567,19 @@ class JavaPOSDeviceControlGenerator {
                     }
                     
                     
-                    «IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAdded»
-                        // Make sure service supports at least version 1.«property.minorVersionAdded».0
-                        if(serviceVersion < deviceVersion«property.versionWhenAddedToUPOS»)
+                    Â«IF property.minorVersionAdded > property.categoryBelongingTo.minorVersionAddedÂ»
+                        // Make sure service supports at least version 1.Â«property.minorVersionAddedÂ».0
+                        if(serviceVersion < deviceVersionÂ«property.versionWhenAddedToUPOSÂ»)
                         {
                             throw new JposException(JPOS_E_NOSERVICE,
-                                                    "Device Service is not 1.«property.minorVersionAdded».0 compliant.");
+                                                    "Device Service is not 1.Â«property.minorVersionAddedÂ».0 compliant.");
                         }
-                    «ENDIF»
+                    Â«ENDIFÂ»
                     
                     // Perform the operation
                     try
                     {
-                        service«property.versionWhenAddedToUPOS».set«property.name»(«setterVariableName»);
+                        serviceÂ«property.versionWhenAddedToUPOSÂ».setÂ«property.nameÂ»(Â«setterVariableNameÂ»);
                     }
                     catch(JposException je)
                     {
@@ -599,19 +599,19 @@ class JavaPOSDeviceControlGenerator {
     }
     
     def private static eventRegistrationMethods(UposEvent event) '''
-        public void add«event.name»Listener(«event.name»Listener l)
+        public void addÂ«event.nameÂ»Listener(Â«event.nameÂ»Listener l)
         {
-            synchronized(«event.name.toFirstLower»Listeners)
+            synchronized(Â«event.name.toFirstLowerÂ»Listeners)
             {
-                «event.name.toFirstLower»Listeners.addElement(l);
+                Â«event.name.toFirstLowerÂ»Listeners.addElement(l);
             }
         }
         
-        public void remove«event.name»Listener(«event.name»Listener l)
+        public void removeÂ«event.nameÂ»Listener(Â«event.nameÂ»Listener l)
         {
-            synchronized(«event.name.toFirstLower»Listeners)
+            synchronized(Â«event.name.toFirstLowerÂ»Listeners)
             {
-                «event.name.toFirstLower»Listeners.removeElement(l);
+                Â«event.name.toFirstLowerÂ»Listeners.removeElement(l);
             }
         }
     '''
@@ -622,18 +622,18 @@ class JavaPOSDeviceControlGenerator {
             ''
         else
             '''
-                public void fire«eventName»Event(«eventName»Event e)
+                public void fireÂ«eventNameÂ»Event(Â«eventNameÂ»Event e)
                 {
-                    «IF category.events.map[name].contains(eventName)»
-                        synchronized(«category.name».this.«eventName.toFirstLower»Listeners)
+                    Â«IF category.events.map[name].contains(eventName)Â»
+                        synchronized(Â«category.nameÂ».this.Â«eventName.toFirstLowerÂ»Listeners)
                         {
                             // deliver the event to all registered listeners
-                            for(int x = 0; x < «eventName.toFirstLower»Listeners.size(); x++)
+                            for(int x = 0; x < Â«eventName.toFirstLowerÂ»Listeners.size(); x++)
                             {
-                              ((«eventName»Listener)«eventName.toFirstLower»Listeners.elementAt(x)).«eventName.toFirstLower»Occurred(e);
+                              ((Â«eventNameÂ»Listener)Â«eventName.toFirstLowerÂ»Listeners.elementAt(x)).Â«eventName.toFirstLowerÂ»Occurred(e);
                             }
                         }
-                    «ENDIF»
+                    Â«ENDIFÂ»
                 }
             ''' 
     } 

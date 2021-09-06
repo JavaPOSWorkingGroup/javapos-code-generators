@@ -159,7 +159,7 @@ class JavaPOSBeanInfoGenerator {
      */
     def private static synthesizeBeanInfoSourceFile(UposCategory category) {
         SynthesizeHelper.generateFile(
-            new File(generatedSourceDir, '''«category.name»BeanInfo.java'''), 
+            new File(generatedSourceDir, '''Â«category.nameÂ»BeanInfo.java'''), 
             category.beanInfoClass
         )
     }
@@ -185,7 +185,7 @@ class JavaPOSBeanInfoGenerator {
         // WORKING GROUP SHALL NOT BE LIABLE FOR ANY DAMAGES SUFFERED AS A RESULT
         // OF USING, MODIFYING OR DISTRIBUTING THIS SOFTWARE OR ITS DERIVATIVES.
         //
-        // «category.name»BeanInfo.java - Bean information for the JavaPOS «category.name»
+        // Â«category.nameÂ»BeanInfo.java - Bean information for the JavaPOS Â«category.nameÂ»
         //    device control
         //
         //------------------------------------------------------------------------------
@@ -195,18 +195,18 @@ class JavaPOSBeanInfoGenerator {
         import java.beans.*;
         import java.lang.reflect.*;
         
-        public class «category.name»BeanInfo
+        public class Â«category.nameÂ»BeanInfo
           extends SimpleBeanInfo
         {
             public BeanDescriptor getBeanDescriptor()
             {
-                return new BeanDescriptor(jpos.«category.name».class);
+                return new BeanDescriptor(jpos.Â«category.nameÂ».class);
             }
         
             public PropertyDescriptor makeProperty(String propertyName)
                 throws IntrospectionException
             {
-                return new PropertyDescriptor(propertyName, jpos.«category.name».class);
+                return new PropertyDescriptor(propertyName, jpos.Â«category.nameÂ».class);
             }
         
             public PropertyDescriptor[] getPropertyDescriptors()
@@ -216,10 +216,10 @@ class JavaPOSBeanInfoGenerator {
                     PropertyDescriptor[] properties =
                     {
                         // Capabilities
-                        «category.properties?.filter[name.startsWith('Cap')].map[makeProperty]?.join(',\n')»«category.properties?.filter[!name.startsWith('Cap')].size > 0 ? ',':''»
+                        Â«category.properties?.filter[name.startsWith('Cap')].map[makeProperty]?.join(',\n')Â»Â«category.properties?.filter[!name.startsWith('Cap')].size > 0 ? ',':''Â»
                         
                         // Properties
-                        «category.properties?.filter[!name.startsWith('Cap')].map[makeProperty]?.join(',\n')»
+                        Â«category.properties?.filter[!name.startsWith('Cap')].map[makeProperty]?.join(',\n')Â»
                     };
         
                     return properties;
@@ -234,7 +234,7 @@ class JavaPOSBeanInfoGenerator {
                 throws IntrospectionException, ClassNotFoundException
             {
                 String listener = "jpos.events." + eventName + "Listener";
-                return new EventSetDescriptor(jpos.«category.name».class,
+                return new EventSetDescriptor(jpos.Â«category.nameÂ».class,
                                               eventName,
                                               Class.forName(listener),
                                               eventName + "Occurred");
@@ -246,7 +246,7 @@ class JavaPOSBeanInfoGenerator {
                 {
                     EventSetDescriptor[] events =
                     {
-                        «category.events?.map[makeEvent].join(',\n')»
+                        Â«category.events?.map[makeEvent].join(',\n')Â»
                     };
                     
                     return events;
@@ -259,9 +259,9 @@ class JavaPOSBeanInfoGenerator {
         }
     '''
     
-    def private static makeProperty(UposProperty property) '''makeProperty("«property.name»")'''
+    def private static makeProperty(UposProperty property) '''makeProperty("Â«property.nameÂ»")'''
     
-    def private static makeEvent(UposEvent event) '''makeEvent("«event.name»")'''
+    def private static makeEvent(UposEvent event) '''makeEvent("Â«event.nameÂ»")'''
     
     
 }

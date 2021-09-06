@@ -47,13 +47,13 @@ class UPOSModelReader {
     val readWriteUposProperty = [Method method | method.declaringClass != Class::forName('java.lang.Object')
         && method.isSetter && !method.isFiscalPrinterSetMethod && !method.isScaleSetMethod
         && !configuration?.omittedWriteProperties?.contains(method.name)
-        && !configuration?.omittedWriteProperties?.contains('''«method.declaringClass.simpleName».«method.name»'''.toString())
+        && !configuration?.omittedWriteProperties?.contains('''Â«method.declaringClass.simpleNameÂ».Â«method.nameÂ»'''.toString())
     ]
 
     val potentialReadOnlyUposProperty = [Method method | method.declaringClass != Class::forName('java.lang.Object')
         && (method.isGetter || method.isWronglyNamedGetProperty)
         && !configuration?.omittedReadProperties?.contains(method.name) 
-        && !configuration?.omittedReadProperties?.contains('''«method.declaringClass.simpleName».«method.name»'''.toString()) 
+        && !configuration?.omittedReadProperties?.contains('''Â«method.declaringClass.simpleNameÂ».Â«method.nameÂ»'''.toString()) 
     ]
 
     val uposMethod = [Method method | method.declaringClass != Class::forName('java.lang.Object')
@@ -61,7 +61,7 @@ class UPOSModelReader {
         && !method.isWronglyNamedGetProperty 
         && !method.name.endsWith('Listener')
         && !configuration?.omittedMethods?.contains(method.name)
-        && !configuration?.omittedMethods?.contains('''«method.declaringClass.simpleName».«method.name»'''.toString()) 
+        && !configuration?.omittedMethods?.contains('''Â«method.declaringClass.simpleNameÂ».Â«method.nameÂ»'''.toString()) 
     ]
 
     val uposEvent = [Method method | method.declaringClass != Class::forName('java.lang.Object')

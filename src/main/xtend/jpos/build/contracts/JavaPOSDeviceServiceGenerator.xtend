@@ -163,7 +163,7 @@ class JavaPOSDeviceServiceGenerator {
     	for (uposMinorVersion : supportedUnifiedPOSMinorVersionRange) {
     		if (uposMinorVersion >= category.minorVersionAdded) {
 		        SynthesizeHelper.generateFile(
-		        	new File(outputDir, '''«category.name»Service1«uposMinorVersion».java'''), 
+		        	new File(outputDir, '''Â«category.nameÂ»Service1Â«uposMinorVersionÂ».java'''), 
 		        	category.deviceServiceInterfaceFor(uposMinorVersion)
 		        )
     		}
@@ -195,30 +195,30 @@ class JavaPOSDeviceServiceGenerator {
 			// software or its derivatives.Permission to use, copy, modify, and distribute
 			// the software and its documentation for any purpose is hereby granted.
 			//
-			// «category.name»Service1«uposMinorVersion»
+			// Â«category.nameÂ»Service1Â«uposMinorVersionÂ»
 			//
 			//   Interface defining all new capabilities, properties and methods
-			//   that are specific to «category.humanReadableName» for release 1.«uposMinorVersion».
+			//   that are specific to Â«category.humanReadableNameÂ» for release 1.Â«uposMinorVersionÂ».
 			//
-			//   Automatically generated from «category.name»Control1«uposMinorVersion».
+			//   Automatically generated from Â«category.nameÂ»Control1Â«uposMinorVersionÂ».
 			//
 			/////////////////////////////////////////////////////////////////////
 			
 			package jpos.services;
 
-			«IF numberOfPropertiesAndMethods > 0»			
+			Â«IF numberOfPropertiesAndMethods > 0Â»			
 				import jpos.*;
-			«ENDIF»
+			Â«ENDIFÂ»
 			
-			public interface «category.name»Service1«uposMinorVersion» extends «category.superInterfaceFor(uposMinorVersion)»
+			public interface Â«category.nameÂ»Service1Â«uposMinorVersionÂ» extends Â«category.superInterfaceFor(uposMinorVersion)Â»
 			{
-				«IF numberOfPropertiesAndMethods > 0»
-					«category.capabilities(uposMinorVersion)»
-					«category.properties(uposMinorVersion)»
-					«category.methods(uposMinorVersion)»
-				«ELSE»
-					// Nothing new added for release 1.«uposMinorVersion»
-				«ENDIF»
+				Â«IF numberOfPropertiesAndMethods > 0Â»
+					Â«category.capabilities(uposMinorVersion)Â»
+					Â«category.properties(uposMinorVersion)Â»
+					Â«category.methods(uposMinorVersion)Â»
+				Â«ELSEÂ»
+					// Nothing new added for release 1.Â«uposMinorVersionÂ»
+				Â«ENDIFÂ»
 			}
 	    '''
     }
@@ -227,7 +227,7 @@ class JavaPOSDeviceServiceGenerator {
     	if (uposMinorVersion == category.minorVersionAdded)
     		'BaseService, jpos.loader.JposServiceInstance'
     	else
-    		'''«category.name»Service1«uposMinorVersion-1»'''
+    		'''Â«category.nameÂ»Service1Â«uposMinorVersion-1Â»'''
     }
 	
     def private static capabilities(UposCategory category, int uposMinorVersion) {
@@ -236,7 +236,7 @@ class JavaPOSDeviceServiceGenerator {
     	if (capabilitiesInThisVersion.size > 0)
 			'''
 			    // Capabilities
-			    «capabilitiesInThisVersion.map[synthesizePopertyFor(uposMinorVersion)].join»
+			    Â«capabilitiesInThisVersion.map[synthesizePopertyFor(uposMinorVersion)].joinÂ»
 			    
 			'''
 		else
@@ -249,7 +249,7 @@ class JavaPOSDeviceServiceGenerator {
     	if (propertiesInThisVersion.size > 0)
 			'''
 			    // Properties
-			    «propertiesInThisVersion.map[synthesizePopertyFor(uposMinorVersion)].join»
+			    Â«propertiesInThisVersion.map[synthesizePopertyFor(uposMinorVersion)].joinÂ»
 			    
 			'''
 		else
@@ -262,7 +262,7 @@ class JavaPOSDeviceServiceGenerator {
     	if (methodsInThisVersion.size > 0)
 			'''
 			    // Methods
-			    «methodsInThisVersion.map[synthesizeMethodFor(uposMinorVersion)].join»
+			    Â«methodsInThisVersion.map[synthesizeMethodFor(uposMinorVersion)].joinÂ»
 			    
 			'''
 		else
@@ -272,10 +272,10 @@ class JavaPOSDeviceServiceGenerator {
 	def private static synthesizePopertyFor(UposProperty property, int uposMinorVersion) {
 		if (uposMinorVersion == property.minorVersionAdded)
 			'''
-		    	«property.getPropertyMethod»
-		    	«IF !property.readonly»
-		    		«property.setPropertyMethod»
-		    	«ENDIF»
+		    	Â«property.getPropertyMethodÂ»
+		    	Â«IF !property.readonlyÂ»
+		    		Â«property.setPropertyMethodÂ»
+		    	Â«ENDIFÂ»
 			'''
 		else
 			''
@@ -290,19 +290,19 @@ class JavaPOSDeviceServiceGenerator {
 		else if (property.javaMethod.name == 'CapTrainingMode' && property.categoryBelongingTo.name == 'ElectronicValueRW')
 			// special handling of ElectronicValueRW property which lacks of the "get" prefix in the Java method
 			'''
-				public «property.javaPOSTypeWhiteSpaceAligned» «property.name»() throws JposException;
+				public Â«property.javaPOSTypeWhiteSpaceAlignedÂ» Â«property.nameÂ»() throws JposException;
 			'''
 		else if (property.javaMethod.name == 'getCapTrainingMode' && property.categoryBelongingTo.name == 'ElectronicValueRW')
 			// the later added correct "get" prefixed property is ignored two avoid double definitions in the interface
 			''
 		else
 			'''
-				public «property.javaPOSTypeWhiteSpaceAligned» get«property.name»() throws JposException;
+				public Â«property.javaPOSTypeWhiteSpaceAlignedÂ» getÂ«property.nameÂ»() throws JposException;
 			'''
 	}
 	
 	def private static setPropertyMethod(UposProperty property) '''
-        public void    set«property.name»(«property.javaPOSType» «property.javaMethod.parameters.get(0).name») throws JposException;
+        public void    setÂ«property.nameÂ»(Â«property.javaPOSTypeÂ» Â«property.javaMethod.parameters.get(0).nameÂ») throws JposException;
     '''
 	
 	def private static synthesizeMethodFor(UposMethod method, int uposVersion) {
@@ -312,7 +312,7 @@ class JavaPOSDeviceServiceGenerator {
             ''
         else if (method.minorVersionAdded == uposVersion)
 			'''
-			    public void    «method.name»(«method.parameterList») throws JposException;
+			    public void    Â«method.nameÂ»(Â«method.parameterListÂ») throws JposException;
 			'''
 		else
 			''
