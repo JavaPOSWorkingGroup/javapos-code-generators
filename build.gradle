@@ -40,8 +40,12 @@ repositories {
 
 dependencies {
 	compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.25.+'
-	compile 'org.javapos:javapos-contracts:1.14.3'
     compile 'junit:junit:4.+'
+
+// 	include the following line if 
+//  in settings.gradle the include "includeBuild '../javapos-contracts'" was commented out
+//  or '../javapos-contracts' does not exist as project in your development evironment
+//	compile 'org.javapos:javapos-contracts:1.14.3'
     
     testCompile 'org.hamcrest:hamcrest-library:1.3'
 }
