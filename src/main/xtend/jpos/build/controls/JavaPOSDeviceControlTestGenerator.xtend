@@ -878,7 +878,9 @@ class JavaPOSDeviceControlTestGenerator {
         import jpos.config.JposEntry;
         import jpos.loader.JposServiceInstance;
         import jpos.loader.JposServiceLoader;
-        import jpos.events.*;
+        «IF testServiceClassName.firesEvents»
+            import jpos.events.*;
+        «ENDIF»
 
         /**
          * JavaPOS Device Service class, intended to be used for testing purposes in «category.name»Test.
@@ -887,7 +889,9 @@ class JavaPOSDeviceControlTestGenerator {
         public final class «testServiceClassName» implements jpos.services.«category.name»Service1«minorVersion», JposServiceInstance {
             
             private JposEntry configuration;
-            private EventCallbacks callbacks;
+            «IF testServiceClassName.firesEvents»
+                private EventCallbacks callbacks;
+            «ENDIF»
             
             @Override
             public int getDeviceServiceVersion() throws JposException {
@@ -907,7 +911,9 @@ class JavaPOSDeviceControlTestGenerator {
             @Override
             public void open(String logicalName, EventCallbacks cb) throws JposException {
                 configuration = JposServiceLoader.getManager().getEntryRegistry().getJposEntry(logicalName);
-                callbacks = cb;
+                «IF testServiceClassName.firesEvents»
+                    callbacks = cb;
+        	    «ENDIF»
             }
         
             @Override
@@ -931,6 +937,10 @@ class JavaPOSDeviceControlTestGenerator {
             .map[testServiceMethod(methodBodySynthesizer)].join('\n')»
         }
     '''
+    
+    def private static boolean firesEvents(CharSequence testClassName) {
+    	return !testClassName.toString.endsWith('RethrowingJposException') && !testClassName.toString.endsWith('AlwaysThrowingNPE')
+    }
     
     def private static isAServiceProperty(UposProperty property) {
         if (property.name == 'DeviceServiceVersion')
