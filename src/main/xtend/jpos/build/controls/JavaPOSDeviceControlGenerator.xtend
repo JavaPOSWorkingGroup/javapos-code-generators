@@ -205,8 +205,9 @@ class JavaPOSDeviceControlGenerator {
         
         import jpos.events.*;
         import jpos.services.*;
-        import java.util.Vector;
-        import jpos.loader.*;
+        
+        import java.util.ArrayList;
+        import java.util.List;
         
         public class «category.name»
             extends BaseJposControl
@@ -403,11 +404,11 @@ class JavaPOSDeviceControlGenerator {
     }
     
     def private static deviceControlEventListenersDeclaration(UposEvent event) '''
-        protected Vector «event.name.toFirstLower»Listeners;
+        protected List<«event.name»Listener> «event.name.toFirstLower»Listeners;
     '''
 
     def private static deviceControlEventListenersInitialization(UposEvent event) '''
-        «event.name.toFirstLower»Listeners = new Vector();
+        «event.name.toFirstLower»Listeners = new ArrayList<«event.name»Listener>();
     '''
     
     def private static String deviceControlProperty(UposProperty property) {
@@ -603,7 +604,7 @@ class JavaPOSDeviceControlGenerator {
         {
             synchronized(«event.name.toFirstLower»Listeners)
             {
-                «event.name.toFirstLower»Listeners.addElement(l);
+                «event.name.toFirstLower»Listeners.add(l);
             }
         }
         
@@ -611,7 +612,7 @@ class JavaPOSDeviceControlGenerator {
         {
             synchronized(«event.name.toFirstLower»Listeners)
             {
-                «event.name.toFirstLower»Listeners.removeElement(l);
+                «event.name.toFirstLower»Listeners.remove(l);
             }
         }
     '''
@@ -628,9 +629,8 @@ class JavaPOSDeviceControlGenerator {
                         synchronized(«category.name».this.«eventName.toFirstLower»Listeners)
                         {
                             // deliver the event to all registered listeners
-                            for(int x = 0; x < «eventName.toFirstLower»Listeners.size(); x++)
-                            {
-                              ((«eventName»Listener)«eventName.toFirstLower»Listeners.elementAt(x)).«eventName.toFirstLower»Occurred(e);
+                            for («eventName»Listener «eventName.toFirstLower»Listener : «category.name».this.«eventName.toFirstLower»Listeners) {
+                            	«eventName.toFirstLower»Listener.«eventName.toFirstLower»Occurred(e);
                             }
                         }
                     «ENDIF»
