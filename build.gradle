@@ -8,8 +8,12 @@
 
 plugins {
 	id 'java'
-	id "org.xtext.xtend" version "3.0.0-M1"
+	id "org.xtext.xtend" version "4.0.0"
 	id 'eclipse'
+}
+
+wrapper {
+	gradleVersion = '8.4'
 }
 
 ext.githubProjectUrl = 'https://github.com/JavaPOSWorkingGroup/javapos-code-generators'
@@ -29,9 +33,9 @@ sourceCompatibility = '1.8'
 ///////////////////////////////////////////////////////////////////////////////
 sourceSets {
 	main.java.srcDir 'src/main/xtend'
-	main.xtendOutputDir = 'src/main/xtend-gen'
+	main.xtend.outputDir = 'src/main/xtend-gen'
   	test.java.srcDir 'src/test/xtend'
-  	test.xtendOutputDir = 'src/test/xtend-gen'
+  	test.xtend.outputDir = 'src/test/xtend-gen'
 }
 
 repositories {
@@ -39,15 +43,15 @@ repositories {
 }
 
 dependencies {
-	compile 'org.eclipse.xtend:org.eclipse.xtend.lib:2.25.+'
-    compile 'junit:junit:4.+'
+	implementation 'org.eclipse.xtend:org.eclipse.xtend.lib:2.25.+'
+    implementation 'junit:junit:4.+'
 
 // 	include the following line if 
 //  in settings.gradle the include "includeBuild '../javapos-contracts'" was commented out
 //  or '../javapos-contracts' does not exist as project in your development evironment
-//	compile 'org.javapos:javapos-contracts:1.14.3'
+//	api 'org.javapos:javapos-contracts:1.14.3'
     
-    testCompile 'org.hamcrest:hamcrest-library:1.3'
+    testImplementation 'org.hamcrest:hamcrest-library:1.3'
 }
 
 
@@ -62,7 +66,7 @@ def javaposManifest = 	manifest {
 }
 
 jar {
-	baseName = artifactName
+	archiveBaseName = artifactName
 	manifest = javaposManifest
 }
 
