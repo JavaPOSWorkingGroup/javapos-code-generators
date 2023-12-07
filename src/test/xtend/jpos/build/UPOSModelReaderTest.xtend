@@ -8,6 +8,7 @@ import jpos.ScaleControl114
 import org.junit.Ignore
 import jpos.FiscalPrinterControl114
 import jpos.ElectronicValueRWControl114
+import jpos.GestureControlControl116
 
 class UPOSModelReaderTest {
 
@@ -202,6 +203,30 @@ class UPOSModelReaderTest {
         assertThat(scaleCategory.methods.filter[name == 'setPriceCalculationMode'].size, is(1))
         assertThat(scaleCategory.methods.filter[name == 'setTarePrioity'].size, is(1))
         assertThat(scaleCategory.methods.filter[name == 'setTarePriority'].size, is(1))
+    }
+	
+	@Test
+    def void testSpecialGestureMethodsWithSetPrefix() {
+        val modelReader = new UPOSModelReader => [
+            configuration = new UPOSModelReaderConfiguration => [
+                supportedCategories = #
+                [
+                    GestureControlControl116
+                ]
+            ]
+        ]
+        
+        val uposModel = modelReader.readUposModelFor('JavaPOSDeviceControls')
+    
+        assertThat(uposModel.categories.length, is(1))
+        val gestureCategory = uposModel.categories.head
+        
+        assertThat(gestureCategory.properties.contains('Position'), is(false))
+        assertThat(gestureCategory.properties.contains('Speed'), is(false))
+        
+        assertThat(gestureCategory.methods.filter[name == 'setPosition'].size, is(1))
+        assertThat(gestureCategory.methods.filter[name == 'getPosition'].size, is(1))
+        assertThat(gestureCategory.methods.filter[name == 'setSpeed'].size, is(1))
     }
 	
     @Test
