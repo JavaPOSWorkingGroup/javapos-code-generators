@@ -1,42 +1,51 @@
 package jpos.build.controls
 
 import java.io.File
-import jpos.BeltControl115
-import jpos.BillAcceptorControl115
-import jpos.BillDispenserControl115
-import jpos.BiometricsControl115
-import jpos.BumpBarControl115
-import jpos.CATControl115
-import jpos.CashChangerControl115
-import jpos.CashDrawerControl115
-import jpos.CheckScannerControl115
-import jpos.CoinAcceptorControl115
-import jpos.CoinDispenserControl115
-import jpos.ElectronicJournalControl115
-import jpos.ElectronicValueRWControl115
-import jpos.FiscalPrinterControl115
-import jpos.GateControl115
-import jpos.HardTotalsControl115
-import jpos.ImageScannerControl115
-import jpos.ItemDispenserControl115
-import jpos.KeylockControl115
-import jpos.LightsControl115
-import jpos.LineDisplayControl115
-import jpos.MICRControl115
-import jpos.MSRControl115
-import jpos.MotionSensorControl115
-import jpos.PINPadControl115
-import jpos.POSKeyboardControl115
-import jpos.POSPowerControl115
-import jpos.POSPrinterControl115
-import jpos.PointCardRWControl115
-import jpos.RFIDScannerControl115
-import jpos.RemoteOrderDisplayControl115
-import jpos.ScaleControl115
-import jpos.ScannerControl115
-import jpos.SignatureCaptureControl115
-import jpos.SmartCardRWControl115
-import jpos.ToneIndicatorControl115
+import jpos.BeltControl116
+import jpos.BillAcceptorControl116
+import jpos.BillDispenserControl116
+import jpos.BiometricsControl116
+import jpos.BumpBarControl116
+import jpos.CATControl116
+import jpos.CashChangerControl116
+import jpos.CashDrawerControl116
+import jpos.CheckScannerControl116
+import jpos.CoinAcceptorControl116
+import jpos.CoinDispenserControl116
+import jpos.ElectronicJournalControl116
+import jpos.ElectronicValueRWControl116
+import jpos.FiscalPrinterControl116
+import jpos.GateControl116
+import jpos.HardTotalsControl116
+import jpos.ImageScannerControl116
+import jpos.ItemDispenserControl116
+import jpos.KeylockControl116
+import jpos.LightsControl116
+import jpos.LineDisplayControl116
+import jpos.MICRControl116
+import jpos.MSRControl116
+import jpos.MotionSensorControl116
+import jpos.PINPadControl116
+import jpos.POSKeyboardControl116
+import jpos.POSPowerControl116
+import jpos.POSPrinterControl116
+import jpos.PointCardRWControl116
+import jpos.RFIDScannerControl116
+import jpos.RemoteOrderDisplayControl116
+import jpos.ScaleControl116
+import jpos.ScannerControl116
+import jpos.SignatureCaptureControl116
+import jpos.SmartCardRWControl116
+import jpos.ToneIndicatorControl116
+import jpos.DeviceMonitorControl116
+import jpos.GestureControlControl116
+import jpos.GraphicDisplayControl116
+import jpos.IndividualRecognitionControl116
+import jpos.SoundPlayerControl116
+import jpos.SoundRecorderControl116
+import jpos.SpeechSynthesisControl116
+import jpos.VideoCaptureControl116
+import jpos.VoiceRecognitionControl116
 import jpos.build.SynthesizeHelper
 import jpos.build.UPOSModelReader
 import jpos.build.UPOSModelReaderConfiguration
@@ -56,7 +65,7 @@ import static extension jpos.build.SynthesizeHelper.versionWhenAddedToUPOS
 class JavaPOSDeviceControlGenerator {
     
     // adapt this if a new UnifiedPOS minor version is going to be supported
-    static val currentUnfiedPOSMinorVersion = 15
+    static val currentUnfiedPOSMinorVersion = 16
 
     // adapt this if your javapos-controls project has another name
     static val generatedSourceDir = new File("../javapos-controls/src/main/java/jpos")
@@ -66,43 +75,53 @@ class JavaPOSDeviceControlGenerator {
         configuration = new UPOSModelReaderConfiguration => [
             supportedCategories = #
             [
-                BumpBarControl115, 
-                CashChangerControl115,
-                CashDrawerControl115,
-                CATControl115,
-                CheckScannerControl115, 
-                CoinDispenserControl115, 
-                FiscalPrinterControl115, 
-                HardTotalsControl115,
-                KeylockControl115,
-                LineDisplayControl115, 
-                MICRControl115,
-                MotionSensorControl115,
-                MSRControl115,
-                PINPadControl115, 
-                PointCardRWControl115, 
-                POSKeyboardControl115,
-                POSPowerControl115,
-                POSPrinterControl115, 
-                RemoteOrderDisplayControl115, 
-                ScaleControl115,
-                ScannerControl115, 
-                SignatureCaptureControl115, 
-                ToneIndicatorControl115,
-                BeltControl115,
-                BillAcceptorControl115, 
-                BillDispenserControl115, 
-                CoinAcceptorControl115,
-                CoinDispenserControl115,
-                BiometricsControl115,
-                ElectronicJournalControl115, 
-                ElectronicValueRWControl115,
-                GateControl115,
-                ImageScannerControl115,  
-                ItemDispenserControl115, 
-                LightsControl115,
-                RFIDScannerControl115, 
-                SmartCardRWControl115
+                BumpBarControl116, 
+                CashChangerControl116,
+                CashDrawerControl116,
+                CATControl116,
+                CheckScannerControl116, 
+                CoinDispenserControl116, 
+                FiscalPrinterControl116, 
+                HardTotalsControl116,
+                KeylockControl116,
+                LineDisplayControl116, 
+                MICRControl116,
+                MotionSensorControl116,
+                MSRControl116,
+                PINPadControl116, 
+                PointCardRWControl116, 
+                POSKeyboardControl116,
+                POSPowerControl116,
+                POSPrinterControl116, 
+                RemoteOrderDisplayControl116, 
+                ScaleControl116,
+                ScannerControl116, 
+                SignatureCaptureControl116, 
+                ToneIndicatorControl116,
+                BeltControl116,
+                BillAcceptorControl116, 
+                BillDispenserControl116, 
+                CoinAcceptorControl116,
+                CoinDispenserControl116,
+                BiometricsControl116,
+                ElectronicJournalControl116, 
+                ElectronicValueRWControl116,
+                GateControl116,
+                ImageScannerControl116,  
+                ItemDispenserControl116, 
+                LightsControl116,
+                RFIDScannerControl116, 
+                SmartCardRWControl116,
+                // new in UPOS 1.16
+                DeviceMonitorControl116,
+                GestureControlControl116,
+                GraphicDisplayControl116,
+                IndividualRecognitionControl116,
+                SoundPlayerControl116,
+                SoundRecorderControl116,
+                SpeechSynthesisControl116,
+                VideoCaptureControl116,
+                VoiceRecognitionControl116                
             ]
             omittedReadProperties = #
             { 
