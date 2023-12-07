@@ -187,6 +187,15 @@ class SynthesizeHelper {
             case "Lights": return "Lights"
             case "RFIDScanner": return "RFID Scanner" 
             case "SmartCardRW": return "Smart Card Reader Writer"
+            case "DeviceMonitor": return "Device Monitor",
+            case "GestureControl": return "Gesture Control"
+            case "GraphicDisplay": return "Graphic Display"
+            case "IndividualRecognition": return "Individual Recognition"
+            case "SoundPlayer": return "Sound Player"
+            case "SoundRecorder": return "Sound Recorder"
+            case "SpeechSynthesis": return "Speech Synthesis"
+            case "VideoCapture": return "Video Capture"
+            case "VoiceRecognition": return "Voice Recognition"
     		default: "UnkownCatgeory"
     	}
     }
