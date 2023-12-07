@@ -6,5 +6,15 @@ def boolean isDevHost = !isRunningOnBuildServer && !hasProperty('disableIDEDepen
 if (startParameter.searchUpwards && isDevHost)
 {
 // comment this out if you want to use binary dependencies
-	if (file('../javapos-contracts').exists()) 		includeBuild '../javapos-contracts'
+	includeBuildProject('javapos-contracts')
+}
+
+def includeBuildProject(projectName) {
+	if (file("../$projectName").exists()) {
+	    includeBuild ("../$projectName") {
+	        dependencySubstitution {
+	            substitute module("org.javapos:$projectName") using project(':')
+	        }
+        }
+    }
 }
