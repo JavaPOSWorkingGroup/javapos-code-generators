@@ -52,7 +52,6 @@ import org.junit.Test
 import java.io.File
 import jpos.build.UposCategory
 import jpos.build.SynthesizeHelper
-import jpos.build.UposMethod
 
 class JavaPOSConfigLoaderXmlFiles {
 	
@@ -102,17 +101,17 @@ class JavaPOSConfigLoaderXmlFiles {
                 ItemDispenserControl116, 
                 LightsControl116,
                 RFIDScannerControl116, 
-                SmartCardRWControl116
+                SmartCardRWControl116,
                 // new in UPOS 1.16
-//                DeviceMonitorControl116,
-//                GestureControlControl116,
-//                GraphicDisplayControl116,
-//                IndividualRecognitionControl116,
-//                SoundPlayerControl116,
-//                SoundRecorderControl116,
-//                SpeechSynthesisControl116,
-//                VideoCaptureControl116,
-//                VoiceRecognitionControl116                
+                DeviceMonitorControl116,
+                GestureControlControl116,
+                GraphicDisplayControl116,
+                IndividualRecognitionControl116,
+                SoundPlayerControl116,
+                SoundRecorderControl116,
+                SpeechSynthesisControl116,
+                VideoCaptureControl116,
+                VoiceRecognitionControl116                
             ]
         ]
     ]
